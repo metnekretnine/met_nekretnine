@@ -1,0 +1,150 @@
+import { defineField, defineType } from "sanity";
+
+export const agencyPage = defineType({
+  name: "agencyPage",
+  title: "Agency Page",
+  type: "document",
+  fieldsets: [
+    {
+      name: "heroSection",
+      title: "Hero Section",
+      options: { collapsible: true, collapsed: false },
+    },
+    {
+      name: "contentSection",
+      title: "Content Section",
+      options: { collapsible: true, collapsed: false },
+    },
+    {
+      name: "directorSection",
+      title: "Director Section",
+      options: { collapsible: true, collapsed: false },
+    },
+    {
+      name: "hgkSection",
+      title: "HGK Section",
+      options: { collapsible: true, collapsed: false },
+    },
+    {
+      name: "seo",
+      title: "SEO",
+      options: { collapsible: true, collapsed: false },
+    },
+  ],
+  fields: [
+    defineField({
+      name: "heroTitle",
+      title: "Hero Title",
+      type: "localeString",
+      fieldset: "heroSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "heroDescriptionText",
+      title: "Hero Description Text",
+      type: "localeString",
+      fieldset: "heroSection",
+    }),
+    defineField({
+      name: "heroBackgroundImage",
+      title: "Hero Background Image",
+      type: "image",
+      options: { hotspot: true },
+      fieldset: "heroSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "heroBackgroundImageAlt",
+      title: "Hero Background Image Alt",
+      type: "localeString",
+      fieldset: "heroSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "content",
+      title: "Content",
+      type: "localeRichText",
+      fieldset: "contentSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "directorLabel",
+      title: "Director Label",
+      type: "localeString",
+      fieldset: "directorSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "directorName",
+      title: "Director Name",
+      type: "string",
+      fieldset: "directorSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "linkedinText",
+      title: "LinkedIn Text",
+      type: "localeString",
+      fieldset: "directorSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "linkedinHref",
+      title: "LinkedIn Href",
+      type: "string",
+      fieldset: "directorSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "hgkLogoHr",
+      title: "HGK Logo HR",
+      type: "image",
+      options: { hotspot: true },
+      fieldset: "hgkSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "hgkLogoEn",
+      title: "HGK Logo EN",
+      type: "image",
+      options: { hotspot: true },
+      fieldset: "hgkSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "hgkLogoAlt",
+      title: "HGK Logo Alt",
+      type: "localeString",
+      fieldset: "hgkSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "metaTitle",
+      title: "Meta Title",
+      type: "localeString",
+      fieldset: "seo",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "metaDescription",
+      title: "Meta Description",
+      type: "localeString",
+      fieldset: "seo",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "metaOgImage",
+      title: "Open Graph Image",
+      type: "image",
+      options: { hotspot: true },
+      fieldset: "seo",
+    }),
+  ],
+  preview: {
+    prepare() {
+      return {
+        title: "Agency Page",
+      };
+    },
+  },
+});

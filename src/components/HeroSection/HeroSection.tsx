@@ -26,7 +26,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ cmsData }) => {
   }, [cmsData.backgroundImages.length]);
 
   return (
-    <section className="relative h-[105svh] md:h-svh flex items-end lg:items-center overflow-hidden">
+    <section className="relative min-h-[105svh] sm:min-h-svh flex items-end lg:items-center overflow-hidden">
       {/* Background Media */}
       <div className="absolute inset-0">
         {cmsData.videoUrl ? (

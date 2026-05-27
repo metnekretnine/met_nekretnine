@@ -57,12 +57,12 @@ export const Navigation: React.FC<NavigationProps> = React.memo(
         }`}
       >
         <nav
-          className={`container mx-auto flex justify-between items-center px-6`}
+          className={`container mx-auto flex justify-between items-center px-6 lg:px-8 xl:px-10`}
         >
           <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
             <LogoCompany
               primaryColor={hasScrollEffect ? "white" : "#101114"}
-              className="h-[31px] w-[85px] md:h-[41px] md:w-[115px]"
+              className="h-[29px] w-[84px] md:h-[39px] md:w-[112px]"
             />
           </Link>
 

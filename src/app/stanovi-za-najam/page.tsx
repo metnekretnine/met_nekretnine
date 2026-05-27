@@ -60,7 +60,7 @@ export default async function ApartmentsForRentPage({ searchParams }: Props) {
   ]);
 
   return (
-    <div className="pt-24 md:pt-32">
+    <div className="pt-28 md:pt-36">
       <PageBreadcrumbJsonLd
         lang={lang}
         name={pageCms.introSection.title}

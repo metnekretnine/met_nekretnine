@@ -26,7 +26,7 @@ export const contactPage = defineType({
     }),
     defineField({
       name: "heroDescriptionText",
-      title: "Hero Description Text",
+      title: "Hero Description Text", 
       type: "localeString",
       fieldset: "heroSection",
     }),

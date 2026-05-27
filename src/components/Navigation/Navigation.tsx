@@ -62,7 +62,7 @@ export const Navigation: React.FC<NavigationProps> = React.memo(
           <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
             <LogoCompany
               primaryColor={hasScrollEffect ? "white" : "#101114"}
-              className="h-[34px] w-[94px] md:h-[46px] md:w-[128px]"
+              className="h-[31px] w-[85px] md:h-[41px] md:w-[115px]"
             />
           </Link>
 

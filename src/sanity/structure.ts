@@ -21,7 +21,7 @@ const singletonListItem = (
   S: StructureBuilder,
   title: string,
   schemaType: string,
-  icon?: ComponentType
+  icon?: ComponentType,
 ) =>
   S.listItem()
     .title(title)
@@ -81,23 +81,15 @@ export const structure: StructureResolver = (S) =>
             .title("Stanovi za najam")
             .items([
               S.documentTypeListItem("listing").title("Svi stanovi"),
-              S.listItem()
-                .title("Istaknuti")
-                .child(
-                  S.documentList()
-                    .title("Istaknuti stanovi")
-                    .filter(
-                      '_type == "listing" && type == "rent" && category == "apartment" && isFeatured == true'
-                    )
-                ),
+
               S.listItem()
                 .title("Aktivni")
                 .child(
                   S.documentList()
                     .title("Aktivni stanovi")
                     .filter(
-                      '_type == "listing" && type == "rent" && category == "apartment" && status in ["active", "published"]'
-                    )
+                      '_type == "listing" && type == "rent" && category == "apartment" && status in ["active", "published"]',
+                    ),
                 ),
               S.listItem()
                 .title("Rezervirani")
@@ -105,8 +97,8 @@ export const structure: StructureResolver = (S) =>
                   S.documentList()
                     .title("Rezervirani stanovi")
                     .filter(
-                      '_type == "listing" && type == "rent" && category == "apartment" && status == "reserved"'
-                    )
+                      '_type == "listing" && type == "rent" && category == "apartment" && status == "reserved"',
+                    ),
                 ),
               S.listItem()
                 .title("Iznajmljeni")
@@ -114,20 +106,39 @@ export const structure: StructureResolver = (S) =>
                   S.documentList()
                     .title("Iznajmljeni stanovi")
                     .filter(
-                      '_type == "listing" && type == "rent" && category == "apartment" && status == "rented"'
-                    )
+                      '_type == "listing" && type == "rent" && category == "apartment" && status == "rented"',
+                    ),
                 ),
               S.divider(),
+
+              S.listItem()
+                .title("Istaknuti")
+                .child(
+                  S.documentList()
+                    .title("Istaknuti stanovi")
+                    .filter(
+                      '_type == "listing" && type == "rent" && category == "apartment" && isFeatured == true',
+                    ),
+                ),
+              S.listItem()
+                .title("Njuškalo")
+                .child(
+                  S.documentList()
+                    .title("Njuškalo stanovi")
+                    .filter(
+                      '_type == "listing" && type == "rent" && category == "apartment" && syncToNjuskalo == true',
+                    ),
+                ),
               S.listItem()
                 .title("Kontakti")
                 .child(
                   S.list()
                     .title("Kontakti")
                     .items([
-                      S.documentTypeListItem("agent").title("Agent / kontakt"),
-                    ])
+                      S.documentTypeListItem("agent").title("Agenti"),
+                    ]),
                 ),
-            ])
+            ]),
         ),
 
       // Stanovi Elements
@@ -141,9 +152,9 @@ export const structure: StructureResolver = (S) =>
               singletonListItem(
                 S,
                 "Listing Explorer Config",
-                "listingExplorerSection"
+                "listingExplorerSection",
               ),
-            ])
+            ]),
         ),
       S.divider(),
 
@@ -159,32 +170,32 @@ export const structure: StructureResolver = (S) =>
                 S,
                 "Detalj stana",
                 "listingDetailsPage",
-                HomeIcon
+                HomeIcon,
               ),
               singletonListItem(S, "MET Home Page", "metHomePage", HomeIcon),
               singletonListItem(
                 S,
                 "Stanovi za najam Page",
                 "apartmentsRentPage",
-                HomeIcon
+                HomeIcon,
               ),
               singletonListItem(
                 S,
                 "Za najmodavce Page",
                 "landlordsPage",
-                HomeIcon
+                HomeIcon,
               ),
               singletonListItem(
                 S,
                 "Za najmoprimce Page",
                 "tenantsPage",
-                HomeIcon
+                HomeIcon,
               ),
               singletonListItem(
                 S,
                 "Ponudite stan Page",
                 "submitApartmentPage",
-                EnvelopeIcon
+                EnvelopeIcon,
               ),
               singletonListItem(S, "O agenciji Page", "agencyPage", UserIcon),
               singletonListItem(S, "Opći uvjeti Page", "termsPage", LockIcon),
@@ -192,26 +203,26 @@ export const structure: StructureResolver = (S) =>
                 S,
                 "Politika kolačića Page",
                 "cookiePolicyPage",
-                LockIcon
+                LockIcon,
               ),
               singletonListItem(S, "Contact Page", "contactPage", EnvelopeIcon),
               singletonListItem(
                 S,
                 "Privacy Policy Page",
                 "privacyPolicyPage",
-                LockIcon
+                LockIcon,
               ),
               singletonListItem(
                 S,
                 "Not Found Page",
                 "notFoundPage",
-                HelpCircleIcon
+                HelpCircleIcon,
               ),
               singletonListItem(
                 S,
                 "Maintenance Page",
                 "maintenancePage",
-                WrenchIcon
+                WrenchIcon,
               ),
               S.divider(),
               singletonListItem(S, "Blog Page", "blogPage", ComposeIcon),
@@ -219,15 +230,15 @@ export const structure: StructureResolver = (S) =>
                 S,
                 "Blog Category Page",
                 "blogCategoryPage",
-                ComposeIcon
+                ComposeIcon,
               ),
               singletonListItem(
                 S,
                 "Blog Author Page",
                 "blogAuthorPage",
-                ComposeIcon
+                ComposeIcon,
               ),
-            ])
+            ]),
         ),
       S.divider(),
 
@@ -253,10 +264,10 @@ export const structure: StructureResolver = (S) =>
                       S.documentList()
                         .title("Posts")
                         .filter(
-                          '_type == "post" && $categoryId in categories[]._ref'
+                          '_type == "post" && $categoryId in categories[]._ref',
                         )
-                        .params({ categoryId })
-                    )
+                        .params({ categoryId }),
+                    ),
                 ),
               S.listItem()
                 .title("Posts by Author")
@@ -267,17 +278,17 @@ export const structure: StructureResolver = (S) =>
                       S.documentList()
                         .title("Posts")
                         .filter('_type == "post" && $authorId == author._ref')
-                        .params({ authorId })
-                    )
+                        .params({ authorId }),
+                    ),
                 ),
               S.listItem()
                 .title("Top Picks Posts")
                 .child(
                   S.documentList()
                     .title("Top Picks Posts")
-                    .filter('_type == "post" && isTopPick == true')
+                    .filter('_type == "post" && isTopPick == true'),
                 ),
-            ])
+            ]),
         ),
 
       // Blog Elements
@@ -290,9 +301,17 @@ export const structure: StructureResolver = (S) =>
             .items([
               singletonListItem(S, "Top Picks", "topPicksSection"),
               singletonListItem(S, "Blog Posts", "blogPostsSection"),
-              singletonListItem(S, "Categories Filter", "categoriesFilterSection"),
-              singletonListItem(S, "Recent Posts Section", "recentPostsSection"),
-            ])
+              singletonListItem(
+                S,
+                "Categories Filter",
+                "categoriesFilterSection",
+              ),
+              singletonListItem(
+                S,
+                "Recent Posts Section",
+                "recentPostsSection",
+              ),
+            ]),
         ),
       S.divider(),
 
@@ -308,8 +327,12 @@ export const structure: StructureResolver = (S) =>
               singletonListItem(S, "Footer", "footerSection"),
               singletonListItem(S, "Cookie Consent", "cookieConsentSection"),
               singletonListItem(S, "WhatsApp Button", "whatsAppButtonSection"),
-              singletonListItem(S, "Notification Bar", "notificationBarSection"),
-            ])
+              singletonListItem(
+                S,
+                "Notification Bar",
+                "notificationBarSection",
+              ),
+            ]),
         ),
       S.divider(),
 
@@ -322,25 +345,33 @@ export const structure: StructureResolver = (S) =>
             .title("Contact Elements")
             .items([
               singletonListItem(S, "Contact Form", "contactFormSection"),
-            ])
+            ]),
         ),
       S.divider(),
 
       // Call To Action
-      singletonListItem(S, "Call To Action Section", "ctaSection", DocumentsIcon),
+      singletonListItem(
+        S,
+        "Call To Action Section",
+        "ctaSection",
+        DocumentsIcon,
+      ),
       S.divider(),
 
       // Site Configuration
       S.listItem()
         .title("Site Configuration")
         .icon(CogIcon)
-        .child(S.document().schemaType("configurationSection").documentId("configurationSection")),
+        .child(
+          S.document()
+            .schemaType("configurationSection")
+            .documentId("configurationSection"),
+        ),
       S.divider(),
 
       // Display any remaining schemas that are not handled manually
       ...S.documentTypeListItems().filter(
-        (listItem) =>
-          !manuallyHandledSchemas.includes(listItem.getId()!)
+        (listItem) => !manuallyHandledSchemas.includes(listItem.getId()!),
       ),
     ]);
 
@@ -358,9 +389,9 @@ export const defaultDocumentNode: DefaultDocumentNodeResolver = (S) => {
           React.createElement(
             "pre",
             null,
-            JSON.stringify(document.displayed, null, 2)
-          )
-        )
+            JSON.stringify(document.displayed, null, 2),
+          ),
+        ),
       )
       .title("JSON"),
   ]);

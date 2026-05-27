@@ -34,7 +34,7 @@ export function getAssetRef(image?: SanityImageValue | null) {
 }
 
 export const DEFAULT_NJUSKALO_WATERMARK_TONE: NjuskaloWatermarkTone = "dark";
-export const NJUSKALO_WATERMARK_VERSION = "met-logo-top-right-v4-tone";
+export const NJUSKALO_WATERMARK_VERSION = "logo-top-right-v7-full-quality";
 
 export function getSourceImageRefs(images?: SanityImageValue[] | null) {
   return Array.from(new Set((images || []).map(getAssetRef).filter(Boolean)));

@@ -25,11 +25,12 @@ const DATASET = process.env.NEXT_PUBLIC_SANITY_DATASET;
 const WATERMARK_OPACITY = 0.7;
 const WATERMARK_MARGIN_RATIO = 0.045;
 const WATERMARK_LOGO_WIDTH_RATIO = 0.09;
+const WATERMARK_JPEG_QUALITY = 1;
 const WATERMARK_COLOR_BY_TONE: Record<NjuskaloWatermarkTone, string> = {
   white: "#FFFFFF",
   dark: "#2E2E2E",
 };
-const WATERMARK_LOGO_ASPECT_RATIO = 64 / 180;
+const WATERMARK_LOGO_ASPECT_RATIO = 397 / 1145;
 
 interface ListingImagesInputProps {
   value?: unknown[];
@@ -41,6 +42,16 @@ interface PreviewItem {
   watermarkTone: NjuskaloWatermarkTone;
   blob: Blob;
   previewUrl: string;
+}
+
+interface NjuskaloReadonlyItem {
+  assetRef: string;
+  hasSource: boolean;
+  isCurrent: boolean;
+  key: string;
+  sourceAssetRef: string;
+  url: string;
+  watermarkTone?: NjuskaloWatermarkTone;
 }
 
 function getSanityImageUrl(assetRef: string) {
@@ -142,7 +153,7 @@ async function createWatermarkedBlob(
         }
       },
       "image/jpeg",
-      0.98,
+      WATERMARK_JPEG_QUALITY,
     );
   });
 }
@@ -164,6 +175,7 @@ export function ListingImagesInput(props: ListingImagesInputProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [previewItems, setPreviewItems] = useState<PreviewItem[]>([]);
   const previewItemsRef = useRef<PreviewItem[]>([]);
+  const orphanCleanupKeyRef = useRef("");
 
   const documentId = document?._id;
   const images = useMemo(
@@ -228,6 +240,59 @@ export function ListingImagesInput(props: ListingImagesInputProps) {
             item.watermarkTone !== currentToneBySource.get(item.sourceAssetRef)),
       ),
     [currentSourceSet, currentToneBySource, existingItems],
+  );
+  const orphanedItems = useMemo(
+    () =>
+      existingItems.filter(
+        (item) =>
+          item.sourceAssetRef && !currentSourceSet.has(item.sourceAssetRef),
+      ),
+    [currentSourceSet, existingItems],
+  );
+  const orphanedItemsKey = orphanedItems
+    .map(
+      (item) =>
+        `${item.sourceAssetRef || ""}:${getAssetRef(item.image) || ""}`,
+    )
+    .join("|");
+  const sourceOrder = useMemo(
+    () => new Map(sourceRefs.map((sourceRef, index) => [sourceRef, index])),
+    [sourceRefs],
+  );
+  const readonlyNjuskaloItems = useMemo(
+    () =>
+      existingItems
+        .map<NjuskaloReadonlyItem | null>((item) => {
+          const sourceAssetRef = item.sourceAssetRef || "";
+          const assetRef = getAssetRef(item.image);
+          const url = assetRef ? getSanityImageUrl(assetRef) : null;
+
+          if (!sourceAssetRef || !assetRef || !url) {
+            return null;
+          }
+
+          const hasSource = currentSourceSet.has(sourceAssetRef);
+
+          return {
+            assetRef,
+            hasSource,
+            isCurrent:
+              hasSource &&
+              item.watermarkVersion === NJUSKALO_WATERMARK_VERSION &&
+              item.watermarkTone === currentToneBySource.get(sourceAssetRef),
+            key: `${sourceAssetRef}:${assetRef}`,
+            sourceAssetRef,
+            url,
+            watermarkTone: item.watermarkTone,
+          };
+        })
+        .filter((item): item is NjuskaloReadonlyItem => Boolean(item))
+        .sort(
+          (itemA, itemB) =>
+            (sourceOrder.get(itemA.sourceAssetRef) ?? Number.MAX_SAFE_INTEGER) -
+            (sourceOrder.get(itemB.sourceAssetRef) ?? Number.MAX_SAFE_INTEGER),
+        ),
+    [currentSourceSet, currentToneBySource, existingItems, sourceOrder],
   );
   const missingSignatures = useMemo(
     () =>
@@ -318,6 +383,70 @@ export function ListingImagesInput(props: ListingImagesInputProps) {
     clearPreviewItems();
     setActionStatus(null);
   }, [clearPreviewItems, existingRefsKey, sourceSignaturesKey]);
+
+  useEffect(() => {
+    if (orphanedItems.length === 0) {
+      orphanCleanupKeyRef.current = "";
+      return;
+    }
+
+    if (!documentId || orphanCleanupKeyRef.current === orphanedItemsKey) {
+      return;
+    }
+
+    let isCancelled = false;
+    orphanCleanupKeyRef.current = orphanedItemsKey;
+
+    const orphanedSourceRefs = new Set(
+      orphanedItems
+        .map((item) => item.sourceAssetRef)
+        .filter((sourceRef): sourceRef is string => Boolean(sourceRef)),
+    );
+    const orphanedAssetRefs = orphanedItems
+      .map((item) => getAssetRef(item.image))
+      .filter(Boolean);
+    const nextItems = existingItems.filter(
+      (item) =>
+        !item.sourceAssetRef || !orphanedSourceRefs.has(item.sourceAssetRef),
+    );
+
+    setActionStatus("Brisanje Njuškalo slika za obrisane originale...");
+
+    client
+      .patch(documentId)
+      .set({ njuskaloImages: nextItems })
+      .commit()
+      .then(async () => {
+        await Promise.all(
+          orphanedAssetRefs.map(async (assetRef) => {
+            await client.delete(assetRef).catch(() => null);
+          }),
+        );
+
+        if (!isCancelled) {
+          setActionStatus("Njuškalo slike za obrisane originale su obrisane.");
+        }
+      })
+      .catch((error) => {
+        console.error("Njuškalo orphan cleanup failed:", error);
+
+        if (!isCancelled) {
+          setActionStatus(
+            "Greška: Njuškalo slike za obrisane originale nisu obrisane.",
+          );
+        }
+      });
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    client,
+    documentId,
+    existingItems,
+    orphanedItems,
+    orphanedItemsKey,
+  ]);
 
   const handlePreparePreview = useCallback(async () => {
     if (missingSignatures.length === 0) {
@@ -470,6 +599,82 @@ export function ListingImagesInput(props: ListingImagesInputProps) {
         `}
       </style>
       {props.renderDefault(props as never)}
+      <Card border padding={4} radius={3}>
+        <Stack space={4}>
+          <Stack space={2}>
+            <Text size={1} weight="semibold">
+              Njuškalo watermark slike
+            </Text>
+            <Text muted size={1}>
+              Verzije samo za pregled koje se koriste za Njuškalo feed.
+            </Text>
+          </Stack>
+
+          {readonlyNjuskaloItems.length > 0 ? (
+            <div
+              style={{
+                display: "grid",
+                gap: 12,
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+              }}
+            >
+              {readonlyNjuskaloItems.map((item) => (
+                <Card
+                  border
+                  key={item.key}
+                  padding={2}
+                  radius={2}
+                  tone={item.isCurrent ? "default" : "caution"}
+                >
+                  <Stack space={2}>
+                    <a
+                      href={item.url}
+                      rel="noreferrer"
+                      target="_blank"
+                      style={{
+                        alignItems: "center",
+                        background: "#0f1117",
+                        borderRadius: 6,
+                        display: "flex",
+                        height: 220,
+                        justifyContent: "center",
+                        overflow: "hidden",
+                        width: "100%",
+                      }}
+                    >
+                      <img
+                        alt=""
+                        src={item.url}
+                        style={{
+                          display: "block",
+                          maxHeight: "100%",
+                          maxWidth: "100%",
+                          objectFit: "contain",
+                        }}
+                      />
+                    </a>
+                    <Text muted size={1}>
+                      {item.watermarkTone === "white"
+                        ? "Bijeli watermark"
+                        : "Tamnosivi watermark"}
+                      {" · "}
+                      {item.isCurrent
+                        ? "Spremna"
+                        : item.hasSource
+                          ? "Treba ažuriranje"
+                          : "Original obrisan"}
+                    </Text>
+                  </Stack>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Text muted size={1}>
+              Nema kreiranih Njuškalo watermark slika.
+            </Text>
+          )}
+        </Stack>
+      </Card>
       <Card padding={3} radius={2} tone={statusTone}>
         <Text size={1}>{actionStatus || persistentStatus.message}</Text>
       </Card>

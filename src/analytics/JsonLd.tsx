@@ -138,7 +138,7 @@ export function JsonLd({ lang }: { lang: Language["id"] }) {
         url: baseUrl,
         logo: {
           "@type": "ImageObject",
-          url: absoluteUrl("/met-logo.svg"),
+          url: absoluteUrl("/logo.png"),
         },
         image: {
           "@type": "ImageObject",

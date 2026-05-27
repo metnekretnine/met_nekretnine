@@ -45,7 +45,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <section className="relative flex min-h-[100dvh] items-end overflow-hidden bg-[#101114]">
+      <section className="relative flex min-h-[100svh] sm:min-h-svh items-end overflow-hidden bg-[#101114]">
         {pageCms.heroSection.backgroundImages.map((backgroundImage, index) => (
           <Image
             key={backgroundImage._key}

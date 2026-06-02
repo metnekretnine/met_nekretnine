@@ -12,6 +12,7 @@ export * from "./HubSpotChatbot/HubSpotChatbot";
 export * from "./LanguageSwitcher/LanguageSwitcher";
 export * from "./Navigation/Navigation";
 export * from "./NotificationBar/NotificationBar";
+export * from "./PhotoCredit/PhotoCredit";
 export * from "./PortableText/PortableText";
 export * from "./PostCard/PostCard";
 export * from "./RecentPostsSection/RecentPostsSection";

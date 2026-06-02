@@ -106,7 +106,7 @@ export const CarouselSlider: React.FC<CarouselSliderProps> = ({
                               <span className="text-lg font-black text-foreground uppercase tracking-wider">
                                 {item.status === "rented"
                                   ? cmsData.rentedLabel
-                                  : cmsData.soldLabel}
+                                  : cmsData.reservedLabel}
                               </span>
                             </div>
                           </div>

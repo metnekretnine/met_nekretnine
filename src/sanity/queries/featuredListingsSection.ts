@@ -11,7 +11,7 @@ export interface FeaturedListingItemCMS {
   imageAlt: string;
   buttonText: string;
   slug: string;
-  status: "active" | "reserved" | "rented" | "sold";
+  status: "active" | "reserved" | "rented";
 }
 
 export interface FeaturedListingsSectionCMS {
@@ -19,7 +19,7 @@ export interface FeaturedListingsSectionCMS {
   moreInfoText: string;
   moreInfoLink: string;
   rentedLabel: string;
-  soldLabel: string;
+  reservedLabel: string;
   listings: FeaturedListingItemCMS[];
 }
 
@@ -31,7 +31,7 @@ export const featuredListingSaleSectionQuery = groq`
       moreInfoLink,
       "buttonText": buttonText[$lang],
       "rentedLabel": rentedLabel[$lang],
-      "soldLabel": soldLabel[$lang]
+      "reservedLabel": reservedLabel[$lang]
     },
     "listings": *[_type == "listing" && type == "sale" && isFeatured == true] | order(publishedAt desc) {
       "title": title[$lang],
@@ -39,7 +39,7 @@ export const featuredListingSaleSectionQuery = groq`
       "image": images[0],
       "imageAlt": title[$lang],
       "slug": slug.current,
-      "status": select(status == "published" => "active", status)
+      status
     }
   }
 `;
@@ -52,15 +52,15 @@ export const featuredRentListingSectionQuery = groq`
       moreInfoLink,
       "buttonText": buttonText[$lang],
       "rentedLabel": rentedLabel[$lang],
-      "soldLabel": soldLabel[$lang]
+      "reservedLabel": reservedLabel[$lang]
     },
-    "listings": *[_type == "listing" && type == "rent" && isFeatured == true && status in ["active", "published", "reserved"]] | order(publishedAt desc) {
+    "listings": *[_type == "listing" && type == "rent" && isFeatured == true && status in ["active", "reserved"]] | order(publishedAt desc) {
       "title": title[$lang],
       "description": shortDescription[$lang],
       "image": images[0],
       "imageAlt": title[$lang],
       "slug": slug.current,
-      "status": select(status == "published" => "active", status)
+      status
     }
   }
 `;

@@ -83,7 +83,7 @@ export const listingFields = groq`
   "title": title[$lang],
   "shortDescription": shortDescription[$lang],
   "slug": slug.current,
-  "status": select(status == "published" => "active", status),
+  status,
   type,
   category,
   district,
@@ -148,7 +148,7 @@ export async function fetchListings({
     `type == "rent"`,
     `category == "apartment"`,
     `defined(district)`,
-    `status in ["active", "published", "reserved"]`,
+    `status in ["active", "reserved"]`,
     district && district !== "all" ? `district == "${district}"` : null,
     rooms && rooms !== "all" ? `numberOfRooms == "${rooms}"` : null,
     minPrice ? `price >= ${minPrice}` : null,
@@ -210,7 +210,7 @@ export async function fetchNjuskaloListings(): Promise<NjuskaloListing[]> {
     *[
       _type == "listing" &&
       syncToNjuskalo == true &&
-      status in ["active", "published"] &&
+      status == "active" &&
       type == "rent" &&
       category == "apartment" &&
       defined(title.hr) &&
@@ -282,7 +282,7 @@ export async function fetchAllDistricts(): Promise<string[]> {
 export async function fetchAllListingSlugs(): Promise<
   { slug: string; publishedAt: string }[]
 > {
-  const query = groq`*[_type == "listing" && type == "rent" && category == "apartment" && defined(district)] {
+  const query = groq`*[_type == "listing" && type == "rent" && category == "apartment" && defined(district) && status in ["active", "reserved"]] {
     "slug": slug.current,
     publishedAt
   }`;

@@ -48,7 +48,7 @@ const roomCountMap: Record<string, number | string> = {
 const listingAvailabilityMap: Record<ListingCMS["status"], string> = {
   active: "https://schema.org/InStock",
   reserved: "https://schema.org/LimitedAvailability",
-  rented: "https://schema.org/SoldOut",
+  rented: "https://schema.org/OutOfStock",
 };
 
 function absoluteUrl(path = "/") {

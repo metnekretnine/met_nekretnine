@@ -21,7 +21,7 @@ export interface ItemsDisplayerItem {
   imageAlt: string;
   buttonText: string;
   buttonLink: string;
-  status?: "active" | "reserved" | "rented" | "sold";
+  status?: "active" | "reserved" | "rented";
 }
 
 export interface ItemsDisplayer {
@@ -29,7 +29,7 @@ export interface ItemsDisplayer {
   moreInfoText: string;
   moreInfoLink: string;
   rentedLabel: string;
-  soldLabel: string;
+  reservedLabel: string;
   items: ItemsDisplayerItem[];
 }
 
@@ -57,7 +57,9 @@ export const mapItemsToDisplayer = (
     moreInfoText: data.moreInfoText,
     moreInfoLink: data.moreInfoLink,
     rentedLabel: isListingSection ? (data as FeaturedListingsSectionCMS).rentedLabel : "",
-    soldLabel: isListingSection ? (data as FeaturedListingsSectionCMS).soldLabel : "",
+    reservedLabel: isListingSection
+      ? (data as FeaturedListingsSectionCMS).reservedLabel
+      : "",
     items: items.map((item) => {
       const baseLink = isListingSection ? LISTING_LINK : data.moreInfoLink;
 

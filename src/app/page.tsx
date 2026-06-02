@@ -12,7 +12,7 @@ import {
   MetHomePageCMS,
 } from "@/sanity/queries";
 import { urlFor } from "@/sanity/lib/image";
-import { CTASection, PortableText } from "@/components";
+import { CTASection, PhotoCredit, PortableText } from "@/components";
 import { getLang, generatePageMetadata } from "@/lib/utils";
 import { HOME_LINK, Language, RENT_LINK } from "@/lib/constants";
 import { formatListingAvailability } from "@/lib/listingFieldFormatters";
@@ -70,6 +70,7 @@ export default async function HomePage() {
           </p>
         </div>
       </section>
+      {pageCms.heroSection.backgroundImages.length > 0 && <PhotoCredit />}
 
       <section className="container mx-auto px-global py-20 md:py-28">
         <div className="max-w-4xl">

@@ -12,9 +12,10 @@ import { generatePageMetadata } from "@/lib/utils/metadata";
 import Link from "next/link";
 import { PortableText } from "@/components/PortableText/PortableText";
 import { formatDate } from "@/lib/utils";
-import { TopPicks, CTASection } from "@/components";
+import { TopPicks, CTASection, PhotoCredit } from "@/components";
 import {
   BLOG_CATEGORY_LINK,
+  BLOG_AUTHOR_LINK,
   BLOG_LINK,
   DEFAULT_LANGUAGE,
   DEFAULT_OG_IMAGE,
@@ -89,6 +90,7 @@ export default async function PostPage({ params }: PostPageProps) {
           priority
         />
       </section>
+      {post.coverImage && <PhotoCredit />}
 
       <article className="container mx-auto px-global py-20 md:py-28">
         <header className="mx-auto mb-14 max-w-4xl">
@@ -109,7 +111,13 @@ export default async function PostPage({ params }: PostPageProps) {
           </h1>
 
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            {publishedDate} · {post.author.name}
+            {publishedDate} ·{" "}
+            <Link
+              href={`${BLOG_AUTHOR_LINK}/${post.author.slug}`}
+              className="transition-colors hover:text-foreground"
+            >
+              {post.author.name}
+            </Link>
           </span>
         </header>
 

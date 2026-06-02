@@ -36,8 +36,8 @@ export const featuredRentListingSection = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
-      name: "soldLabel",
-      title: "Sold Label",
+      name: "reservedLabel",
+      title: "Reserved Label",
       type: "localeString",
       validation: (rule) => rule.required(),
     }),

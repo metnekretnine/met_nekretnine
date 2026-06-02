@@ -73,13 +73,13 @@ export default async function LandlordsPage() {
         </div>
       </section>
 
-      <section className="bg-[#f5f7f8] py-16 md:py-24">
+      <section className="bg-[#f5f7f8] py-10 md:py-14">
         <div className="container mx-auto px-global">
           <div className="max-w-3xl space-y-5 text-lg leading-relaxed text-muted-foreground">
             <PortableText value={pageCms.modelSection.channelsContent} />
           </div>
 
-          <h2 className="mt-14 text-3xl font-semibold tracking-tight md:text-5xl">
+          <h2 className="mt-10 text-3xl font-semibold tracking-tight md:mt-12 md:text-5xl">
             {pageCms.modelSection.title}
           </h2>
           <div className="mt-8 grid gap-4 md:grid-cols-3">

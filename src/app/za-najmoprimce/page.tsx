@@ -57,7 +57,7 @@ export default async function TenantsPage() {
         </div>
       </section>
 
-      <section className="bg-[#f5f7f8] py-16 md:py-24">
+      <section className="bg-[#f5f7f8] py-10 md:py-14">
         <div className="container mx-auto px-global">
           <div className="max-w-3xl space-y-5 text-lg leading-relaxed text-muted-foreground">
             <PortableText value={pageCms.contentSection.content} />

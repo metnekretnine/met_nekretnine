@@ -88,7 +88,7 @@ export const structure: StructureResolver = (S) =>
                   S.documentList()
                     .title("Aktivni stanovi")
                     .filter(
-                      '_type == "listing" && type == "rent" && category == "apartment" && status in ["active", "published"]',
+                      '_type == "listing" && type == "rent" && category == "apartment" && status == "active"',
                     ),
                 ),
               S.listItem()

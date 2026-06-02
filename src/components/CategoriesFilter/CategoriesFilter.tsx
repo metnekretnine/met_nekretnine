@@ -22,8 +22,8 @@ export function CategoriesFilter({
   const isAll = pathname === BLOG_LINK;
 
   return (
-    <section className={`w-full pb-8 pt-2 ${className}`}>
-      <div className="flex flex-wrap gap-2">
+    <section className={`w-full pb-12 pt-4 md:pt-6 ${className}`}>
+      <div className="mx-auto flex max-w-4xl flex-wrap gap-2">
         <Link
           href={BLOG_LINK}
           className={`rounded-lg border px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] transition-colors ${

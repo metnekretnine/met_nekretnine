@@ -90,7 +90,7 @@ function ListingExplorerContent({
 
   return (
     <div
-      className="flex flex-col lg:flex-row gap-12 lg:gap-16 py-12"
+      className="flex flex-col gap-10 pt-6 pb-12 md:gap-12 md:py-12 lg:flex-row lg:gap-16"
       id="listings"
     >
       <FilterForm
@@ -163,7 +163,7 @@ function ListingsExplorerSkeleton({
   lang: Language["id"];
 }) {
   return (
-    <div className="flex flex-col lg:flex-row gap-12 lg:gap-16 py-12">
+    <div className="flex flex-col gap-10 pt-6 pb-12 md:gap-12 md:py-12 lg:flex-row lg:gap-16">
       <FilterForm
         filters={{
           district: "all",

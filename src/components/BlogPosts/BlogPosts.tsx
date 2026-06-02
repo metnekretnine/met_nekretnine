@@ -54,7 +54,7 @@ export const BlogPosts: React.FC<BlogPostsProps> = ({
     <>
       {initialPosts.length > 0 ? (
         <section className={`w-full py-8 ${className}`}>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mx-auto grid max-w-4xl grid-cols-1 gap-4">
             {displayedPosts.map((post) => (
               <PostCard key={post._id} post={post} lang={lang} />
             ))}

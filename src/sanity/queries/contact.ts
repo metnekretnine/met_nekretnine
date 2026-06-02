@@ -18,6 +18,9 @@ export interface ContactPageCMS {
   companyAddressSubValue: string;
   companyPhoneLabel: string;
   companyPhoneValue: string;
+  whatsAppLabel: string;
+  whatsAppValue: string;
+  whatsAppHref: string;
   companyEmailLabel: string;
   companyEmailValue: string;
   instagramLabel: string;
@@ -50,6 +53,9 @@ const contactQuery = groq`
     "companyAddressSubValue": companyAddressSubValue[$lang],
     "companyPhoneLabel": companyPhoneLabel[$lang],
     "companyPhoneValue": companyPhoneValue,
+    "whatsAppLabel": whatsAppLabel[$lang],
+    "whatsAppValue": whatsAppValue,
+    "whatsAppHref": whatsAppHref,
     "companyEmailLabel": companyEmailLabel[$lang],
     "companyEmailValue": companyEmailValue,
     "instagramLabel": instagramLabel[$lang],

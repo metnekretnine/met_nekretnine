@@ -1,6 +1,7 @@
 export { MicrosoftClarityAnalytics } from "./MicrosoftClarityAnalytics";
 export { MetaPixelAnalytics } from "./MetaPixelAnalytics";
 export { GoogleAnalytics } from "./GoogleAnalytics";
+export { VercelAnalytics } from "./VercelAnalytics";
 export {
   BlogBreadcrumbJsonLd,
   BlogCategoryBreadcrumbJsonLd,

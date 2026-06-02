@@ -21,6 +21,11 @@ export const tenantsPage = defineType({
       options: { collapsible: true, collapsed: false },
     },
     {
+      name: "faq",
+      title: "FAQ",
+      options: { collapsible: true, collapsed: false },
+    },
+    {
       name: "seo",
       title: "SEO",
       options: { collapsible: true, collapsed: false },
@@ -103,6 +108,12 @@ export const tenantsPage = defineType({
       type: "string",
       fieldset: "contentSection",
       validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "faqSection",
+      title: "FAQ Section",
+      type: "faqSection",
+      fieldset: "faq",
     }),
     defineField({
       name: "metaTitle",

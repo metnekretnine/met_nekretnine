@@ -18,6 +18,30 @@ export const footerSection = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "specialtyText",
+      title: "Specialty Text",
+      type: "localeString",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "licenseText",
+      title: "License Text",
+      type: "localeString",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "email",
+      title: "Email",
+      type: "string",
+      validation: (rule) => rule.required().email(),
+    }),
+    defineField({
+      name: "phone",
+      title: "Phone",
+      type: "string",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
       name: "linkedin",
       title: "LinkedIn",
       type: "object",

@@ -25,6 +25,11 @@ export const post = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "metaTitle",
+      title: "Meta Title",
+      type: "localeString",
+    }),
+    defineField({
       name: "slug",
       title: "Slug",
       type: "slug",

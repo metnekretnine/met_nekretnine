@@ -17,12 +17,23 @@ export interface LandlordsPageCMS {
   processSection: {
     items: { text: string }[];
   };
+  whyMetBox: {
+    title: string;
+    items: { text: string }[];
+  };
   modelSection: {
     channelsContent: PortableTextBlock[];
     title: string;
     items: { title: string; text: string }[];
     ctaText: string;
     ctaHref: string;
+  };
+  faqSection?: {
+    title: string;
+    faqs: {
+      question: string;
+      answer: PortableTextBlock[];
+    }[];
   };
   metaTitle: string;
   metaDescription: string;
@@ -44,6 +55,12 @@ const landlordsPageQuery = groq`
         "text": text[$lang]
       }
     },
+    "whyMetBox": {
+      "title": whyMetTitle[$lang],
+      "items": whyMetItems[] {
+        "text": text[$lang]
+      }
+    },
     "modelSection": {
       "channelsContent": channelsContent[$lang],
       "title": modelTitle[$lang],
@@ -53,6 +70,13 @@ const landlordsPageQuery = groq`
       },
       "ctaText": ctaText[$lang],
       "ctaHref": ctaHref
+    },
+    "faqSection": faqSection {
+      "title": title[$lang],
+      "faqs": faqs[] {
+        "question": question[$lang],
+        "answer": answer[$lang]
+      }
     },
     "metaTitle": metaTitle[$lang],
     "metaDescription": metaDescription[$lang],

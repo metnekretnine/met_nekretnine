@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Instagram, Linkedin } from "lucide-react";
+import { Instagram, Linkedin, Mail, Phone } from "lucide-react";
 import { LogoCompany } from "../Icons/LogoCompany";
 import { FooterSectionCMS } from "@/sanity/queries";
 import { usePathname } from "next/navigation";
@@ -24,11 +24,13 @@ export const Footer: React.FC<Props> = ({ cmsData }) => {
     return null;
   }
 
+  const phoneHref = `tel:${cmsData.phone.replace(/\s/g, "")}`;
+
   return (
-    <footer className="w-full bg-[#101114] text-background">
+    <footer className="w-full bg-[#222222] text-background">
       <div className="container mx-auto px-6 py-14 md:py-18 2xl:max-w-[1400px]">
         <div className="flex flex-col justify-between gap-12 lg:flex-row">
-          <div className="max-w-sm">
+          <div className="max-w-md">
             <Link className="flex items-center" href="/">
               <LogoCompany
                 width={106}
@@ -37,9 +39,31 @@ export const Footer: React.FC<Props> = ({ cmsData }) => {
                 className="text-background"
               />
             </Link>
-            <p className="mt-6 text-sm text-background/70 leading-relaxed">
+            <p className="mt-6 text-sm font-semibold leading-relaxed text-background/85">
+              {cmsData.specialtyText}
+            </p>
+            <p className="mt-4 text-sm text-background/70 leading-relaxed">
               {cmsData.tagline}
             </p>
+            <p className="mt-3 text-sm leading-relaxed text-background/70">
+              {cmsData.licenseText}
+            </p>
+            <div className="mt-5 grid gap-2">
+              <Link
+                href={`mailto:${cmsData.email}`}
+                className="inline-flex items-center gap-3 text-sm text-background/75 transition-colors hover:text-white"
+              >
+                <Mail className="h-4 w-4" />
+                {cmsData.email}
+              </Link>
+              <Link
+                href={phoneHref}
+                className="inline-flex items-center gap-3 text-sm text-background/75 transition-colors hover:text-white"
+              >
+                <Phone className="h-4 w-4" />
+                {cmsData.phone}
+              </Link>
+            </div>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 href={cmsData.linkedin.href}

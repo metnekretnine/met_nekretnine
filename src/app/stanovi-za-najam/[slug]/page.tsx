@@ -61,7 +61,7 @@ export default async function ListingDetailPage({ params }: Props) {
           { name: listing.title, item: `${LISTING_LINK}/${listing.slug}` },
         ]}
       />
-      <section className="container mx-auto px-global pb-10 pt-28 md:pt-36">
+      <section className="container mx-auto px-global pb-6 pt-28 md:pb-8 md:pt-36">
         <p className="text-primary font-semibold uppercase tracking-[0.24em] text-xs mb-6">
           {listing.district}
         </p>

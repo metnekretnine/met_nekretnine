@@ -7,6 +7,7 @@ import {
   Linkedin,
   Mail,
   MapPin,
+  MessageCircle,
   Phone,
 } from "lucide-react";
 import { Metadata } from "next";
@@ -54,29 +55,20 @@ export default async function ContactPage() {
       />
 
       <section className="container mx-auto px-global py-16 md:py-24">
-        <div className="grid items-start gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-12">
           <div className="space-y-6">
-            <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-              {contactCms.findUsTitle}
-            </h2>
-            <div className="flex gap-3">
-              <SocialIconLink
-                href={contactCms.instagramHref}
-                label={contactCms.instagramLabel}
-                icon={<Instagram className="h-5 w-5" />}
-              />
-              <SocialIconLink
-                href={contactCms.linkedinHref}
-                label={contactCms.linkedinLabel}
-                icon={<Linkedin className="h-5 w-5" />}
-              />
-            </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
               <ContactCard
                 icon={<Phone className="h-5 w-5" />}
                 label={contactCms.companyPhoneLabel}
                 value={contactCms.companyPhoneValue}
                 href={`tel:${contactCms.companyPhoneValue.replace(/\s/g, "")}`}
+              />
+              <ContactCard
+                icon={<MessageCircle className="h-5 w-5" />}
+                label={contactCms.whatsAppLabel}
+                value={contactCms.whatsAppValue}
+                href={contactCms.whatsAppHref}
               />
               <ContactCard
                 icon={<Mail className="h-5 w-5" />}
@@ -103,9 +95,21 @@ export default async function ContactPage() {
                 subValue={contactCms.infoSubValue}
               />
             </div>
+            <div className="flex gap-3">
+              <SocialIconLink
+                href={contactCms.instagramHref}
+                label={contactCms.instagramLabel}
+                icon={<Instagram className="h-5 w-5" />}
+              />
+              <SocialIconLink
+                href={contactCms.linkedinHref}
+                label={contactCms.linkedinLabel}
+                icon={<Linkedin className="h-5 w-5" />}
+              />
+            </div>
           </div>
 
-          <div className="rounded-lg border border-[#dedede] bg-white p-6 shadow-sm md:p-8">
+          <div className="rounded-lg border border-[#dedede] bg-white p-6 md:p-8">
             <h2 className="text-3xl font-semibold tracking-tight">
               {contactCms.sendInquiryTitle}
             </h2>

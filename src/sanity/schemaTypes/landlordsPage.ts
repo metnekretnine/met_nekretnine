@@ -21,8 +21,18 @@ export const landlordsPage = defineType({
       options: { collapsible: true, collapsed: false },
     },
     {
+      name: "whyMetBox",
+      title: "Why MET Box",
+      options: { collapsible: true, collapsed: false },
+    },
+    {
       name: "modelSection",
       title: "Model Section",
+      options: { collapsible: true, collapsed: false },
+    },
+    {
+      name: "faq",
+      title: "FAQ",
       options: { collapsible: true, collapsed: false },
     },
     {
@@ -98,6 +108,36 @@ export const landlordsPage = defineType({
       ],
     }),
     defineField({
+      name: "whyMetTitle",
+      title: "Why MET Title",
+      type: "localeString",
+      fieldset: "whyMetBox",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "whyMetItems",
+      title: "Why MET Items",
+      type: "array",
+      fieldset: "whyMetBox",
+      validation: (rule) => rule.required().min(1),
+      of: [
+        {
+          type: "object",
+          fields: [
+            defineField({
+              name: "text",
+              title: "Text",
+              type: "localeString",
+              validation: (rule) => rule.required(),
+            }),
+          ],
+          preview: {
+            select: { title: "text.hr" },
+          },
+        },
+      ],
+    }),
+    defineField({
       name: "channelsContent",
       title: "Channels Content",
       type: "localeRichText",
@@ -153,6 +193,12 @@ export const landlordsPage = defineType({
       type: "string",
       fieldset: "modelSection",
       validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "faqSection",
+      title: "FAQ Section",
+      type: "faqSection",
+      fieldset: "faq",
     }),
     defineField({
       name: "metaTitle",

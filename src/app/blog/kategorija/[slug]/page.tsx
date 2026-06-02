@@ -6,6 +6,7 @@ import {
   fetchPostsCount,
   fetchPosts,
   fetchCategoryBySlug,
+  fetchBlogPageCms,
   fetchBlogCategoryPageCms,
   fetchTopPicksSectionCms,
   fetchBlogPostsSectionCms,
@@ -66,6 +67,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     topPickPosts,
     totalPostsCount,
     allCategories,
+    blogCms,
     topPicksCms,
     blogPostsCms,
     categoriesFilterCms,
@@ -76,6 +78,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     fetchTopPicks(lang, slug),
     fetchPostsCount(slug, undefined),
     fetchAllCategories(lang),
+    fetchBlogPageCms(lang),
     fetchTopPicksSectionCms(lang),
     fetchBlogPostsSectionCms(lang),
     fetchCategoriesFilterSectionCms(lang),
@@ -90,7 +93,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         categorySlug={category.slug}
       />
       <SubPageHero
-        title={category.name}
+        title={blogCms.heroTitle}
         description={category.heroDescriptionText}
         backgroundImage={category.heroBackgroundImage}
       />

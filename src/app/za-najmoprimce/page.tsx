@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Metadata } from "next";
-import { PortableText, SubPageHero } from "@/components";
+import { FaqSection, PortableText, SubPageHero } from "@/components";
 import { fetchTenantsPageCms } from "@/sanity/queries";
 import { getLang, generatePageMetadata } from "@/lib/utils";
 import { PageBreadcrumbJsonLd } from "@/analytics";
@@ -71,6 +71,10 @@ export default async function TenantsPage() {
           </Link>
         </div>
       </section>
+
+      {pageCms.faqSection && (
+        <FaqSection data={pageCms.faqSection} className="py-16 md:py-24" />
+      )}
     </>
   );
 }

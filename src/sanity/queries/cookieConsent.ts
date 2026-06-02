@@ -6,20 +6,28 @@ import { Language } from "@/lib/constants";
 export interface CookieConsentSectionCMS {
   title: string;
   description: string;
-  agreementText: string;
   learnMoreLinkText: string;
-  declineButtonText: string;
   acceptButtonText: string;
+  settingsButtonText: string;
+  saveSettingsButtonText: string;
+  necessaryCookiesLabel: string;
+  necessaryCookiesDescription: string;
+  analyticsCookiesLabel: string;
+  analyticsCookiesDescription: string;
 }
 
 const cookieConsentQuery = groq`
   *[_type == "cookieConsentSection"][0] {
     "title": title[$lang],
     "description": description[$lang],
-    "agreementText": agreementText[$lang],
     "learnMoreLinkText": learnMoreLinkText[$lang],
-    "declineButtonText": declineButtonText[$lang],
     "acceptButtonText": acceptButtonText[$lang],
+    "settingsButtonText": settingsButtonText[$lang],
+    "saveSettingsButtonText": saveSettingsButtonText[$lang],
+    "necessaryCookiesLabel": necessaryCookiesLabel[$lang],
+    "necessaryCookiesDescription": necessaryCookiesDescription[$lang],
+    "analyticsCookiesLabel": analyticsCookiesLabel[$lang],
+    "analyticsCookiesDescription": analyticsCookiesDescription[$lang],
   }
 `;
 

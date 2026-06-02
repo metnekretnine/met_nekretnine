@@ -21,6 +21,10 @@ export interface FooterSection {
 export interface FooterSectionCMS {
   companyName: string;
   tagline: string;
+  specialtyText: string;
+  licenseText: string;
+  email: string;
+  phone: string;
   linkedin: SocialLink;
   instagram: SocialLink;
   sections: FooterSection[];
@@ -31,6 +35,10 @@ const footerQuery = groq`
   *[_type == "footerSection"][0] {
     "companyName": companyName[$lang],
     "tagline": tagline[$lang],
+    "specialtyText": specialtyText[$lang],
+    "licenseText": licenseText[$lang],
+    email,
+    phone,
     "linkedin": {
       "href": linkedin.href,
       "ariaLabel": linkedin.ariaLabel

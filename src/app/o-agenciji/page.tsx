@@ -62,14 +62,21 @@ export default async function AboutAgencyPage() {
             </div>
             {pageCms.hgkSection.logoUrl && (
               <div className="flex rounded-lg border border-foreground/10 bg-white px-6 py-7 md:justify-center">
-                <Image
-                  src={pageCms.hgkSection.logoUrl}
-                  alt={pageCms.hgkSection.logoAlt ?? ""}
-                  width={360}
-                  height={240}
-                  unoptimized
-                  className="h-auto w-full max-w-[118px] opacity-80 md:max-w-[132px]"
-                />
+                <Link
+                  href="https://www.hgk.hr/"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label={pageCms.hgkSection.logoAlt ?? "HGK"}
+                >
+                  <Image
+                    src={pageCms.hgkSection.logoUrl}
+                    alt={pageCms.hgkSection.logoAlt ?? ""}
+                    width={360}
+                    height={240}
+                    unoptimized
+                    className="h-auto w-full max-w-[118px] opacity-80 transition-opacity hover:opacity-100 md:max-w-[132px]"
+                  />
+                </Link>
               </div>
             )}
           </aside>

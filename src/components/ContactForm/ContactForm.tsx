@@ -144,7 +144,7 @@ export const ContactForm = ({ cmsData, className }: ContactFormProps) => {
               <FormControl>
                 <Textarea
                   placeholder={cmsData.messagePlaceholder}
-                  className="min-h-[150px] rounded-[1.5rem] border-[#dedede] !bg-white px-6 py-4 text-foreground shadow-none transition-colors placeholder:text-foreground/30 focus-visible:border-foreground/30 focus-visible:ring-0"
+                  className="min-h-[126px] rounded-[1.5rem] border-[#dedede] !bg-white px-6 py-4 text-foreground shadow-none transition-colors placeholder:text-foreground/30 focus-visible:border-foreground/30 focus-visible:ring-0"
                   {...field}
                 />
               </FormControl>

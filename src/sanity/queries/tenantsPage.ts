@@ -19,6 +19,13 @@ export interface TenantsPageCMS {
     ctaText: string;
     ctaHref: string;
   };
+  faqSection?: {
+    title: string;
+    faqs: {
+      question: string;
+      answer: PortableTextBlock[];
+    }[];
+  };
   metaTitle: string;
   metaDescription: string;
   metaOgImage?: SanityImageSource;
@@ -40,6 +47,13 @@ const tenantsPageQuery = groq`
       "content": content[$lang],
       "ctaText": ctaText[$lang],
       "ctaHref": ctaHref
+    },
+    "faqSection": faqSection {
+      "title": title[$lang],
+      "faqs": faqs[] {
+        "question": question[$lang],
+        "answer": answer[$lang]
+      }
     },
     "metaTitle": metaTitle[$lang],
     "metaDescription": metaDescription[$lang],

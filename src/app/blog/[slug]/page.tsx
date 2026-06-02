@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Image from "next/image";
 import { getLang } from "@/lib/utils";
 import {
   fetchPostBySlug,
@@ -11,13 +12,15 @@ import { generatePageMetadata } from "@/lib/utils/metadata";
 import Link from "next/link";
 import { PortableText } from "@/components/PortableText/PortableText";
 import { formatDate } from "@/lib/utils";
+import { TopPicks, CTASection } from "@/components";
 import {
-  TopPicks,
-  AuthorHeaderBlog,
-  CTASection,
-} from "@/components";
-import { BLOG_CATEGORY_LINK, BLOG_LINK, DEFAULT_LANGUAGE } from "@/lib/constants";
+  BLOG_CATEGORY_LINK,
+  BLOG_LINK,
+  DEFAULT_LANGUAGE,
+  DEFAULT_OG_IMAGE,
+} from "@/lib/constants";
 import { BlogBreadcrumbJsonLd, BlogPostingJsonLd } from "@/analytics";
+import { urlFor } from "@/sanity/lib/image";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -31,7 +34,7 @@ export async function generateMetadata({
   const post = await fetchPostBySlug(lang, slug);
 
   return generatePageMetadata({
-    metaTitle: post.title,
+    metaTitle: post.metaTitle || post.title,
     metaDescription: post.metaDescription,
     metaOgImage: post.coverImage,
     canonicalPath: `${BLOG_LINK}/${post.slug}`,
@@ -63,6 +66,9 @@ export default async function PostPage({ params }: PostPageProps) {
     ]);
 
   const publishedDate = formatDate(post.publishedAt, lang);
+  const coverImageUrl = post.coverImage
+    ? urlFor(post.coverImage).width(2000).height(1100).url()
+    : DEFAULT_OG_IMAGE;
 
   return (
     <div>
@@ -72,7 +78,17 @@ export default async function PostPage({ params }: PostPageProps) {
         currentName={post.title}
         currentPath={`${BLOG_LINK}/${post.slug}`}
       />
-      <AuthorHeaderBlog author={post.author} />
+
+      <section className="relative mt-14 h-[48dvh] min-h-[360px] overflow-hidden md:mt-20 md:h-[56dvh]">
+        <Image
+          src={coverImageUrl}
+          alt={post.coverImageAlt || post.title}
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+          priority
+        />
+      </section>
 
       <article className="container mx-auto px-global py-20 md:py-28">
         <header className="mx-auto mb-14 max-w-4xl">
@@ -93,7 +109,7 @@ export default async function PostPage({ params }: PostPageProps) {
           </h1>
 
           <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            {publishedDate}
+            {publishedDate} · {post.author.name}
           </span>
         </header>
 

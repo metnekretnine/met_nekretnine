@@ -10,9 +10,13 @@ jest.mock('next/navigation', () => ({
 const mockCmsData: FooterSectionCMS = {
   companyName: 'Test Company',
   tagline: 'This is a test tagline.',
-  facebook: {
-    href: 'https://www.facebook.com/test',
-    ariaLabel: 'Facebook page',
+  specialtyText: 'Specialized in test rentals.',
+  licenseText: 'Licensed test agency.',
+  email: 'test@example.com',
+  phone: '+385 91 0000 000',
+  linkedin: {
+    href: 'https://www.linkedin.com/company/test',
+    ariaLabel: 'LinkedIn page',
   },
   instagram: {
     href: 'https://www.instagram.com/test',
@@ -59,11 +63,11 @@ describe('Footer', () => {
 
   it('renders social media links', () => {
     render(<Footer cmsData={mockCmsData} />);
-    const facebookLink = screen.getByLabelText(mockCmsData.facebook.ariaLabel);
+    const linkedinLink = screen.getByLabelText(mockCmsData.linkedin.ariaLabel);
     const instagramLink = screen.getByLabelText(mockCmsData.instagram.ariaLabel);
 
-    expect(facebookLink).toBeInTheDocument();
-    expect(facebookLink).toHaveAttribute('href', mockCmsData.facebook.href);
+    expect(linkedinLink).toBeInTheDocument();
+    expect(linkedinLink).toHaveAttribute('href', mockCmsData.linkedin.href);
     expect(instagramLink).toBeInTheDocument();
     expect(instagramLink).toHaveAttribute('href', mockCmsData.instagram.href);
   });

@@ -4,7 +4,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Cookie } from "lucide-react";
 import Link from "next/link";
 import Cookies from "js-cookie";
-import { COOKIE_CONSENT_NAME, PRIVACY_POLICY_LINK } from "@/lib/constants";
+import { COOKIE_CONSENT_NAME, COOKIE_POLICY_LINK } from "@/lib/constants";
 import { cn } from "@/shadcn/lib/utils";
 import { CookieConsentSectionCMS } from "@/sanity/queries";
 
@@ -15,10 +15,17 @@ interface CookieConsentProps {
 const CookieConsent: React.FC<CookieConsentProps> = ({ cmsData }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [hide, setHide] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [analyticsEnabled, setAnalyticsEnabled] = useState(true);
 
-  const handleConsent = useCallback((accepted: boolean) => {
+  const saveConsent = useCallback((analytics: boolean) => {
     setIsOpen(false);
-    Cookies.set(COOKIE_CONSENT_NAME, String(accepted), { expires: 365 });
+    Cookies.set(
+      COOKIE_CONSENT_NAME,
+      JSON.stringify({ necessary: true, analytics }),
+      { expires: 365 }
+    );
+    window.dispatchEvent(new Event("cookie-consent-updated"));
     setTimeout(() => setHide(true), 700);
   }, []);
 
@@ -56,12 +63,45 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ cmsData }) => {
           {cmsData.description}
         </p>
 
-        <p className="mb-2 text-xs leading-relaxed text-foreground/55">
-          {cmsData.agreementText}
-        </p>
+        {showSettings && (
+          <div className="mb-5 space-y-3 border-y border-foreground/10 py-4">
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked
+                disabled
+                className="mt-1 h-4 w-4 accent-foreground"
+              />
+              <span>
+                <span className="block text-sm font-semibold text-foreground">
+                  {cmsData.necessaryCookiesLabel}
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                  {cmsData.necessaryCookiesDescription}
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-3">
+              <input
+                type="checkbox"
+                checked={analyticsEnabled}
+                onChange={(event) => setAnalyticsEnabled(event.target.checked)}
+                className="mt-1 h-4 w-4 accent-foreground"
+              />
+              <span>
+                <span className="block text-sm font-semibold text-foreground">
+                  {cmsData.analyticsCookiesLabel}
+                </span>
+                <span className="mt-1 block text-xs leading-relaxed text-muted-foreground">
+                  {cmsData.analyticsCookiesDescription}
+                </span>
+              </span>
+            </label>
+          </div>
+        )}
 
         <Link
-          href={PRIVACY_POLICY_LINK}
+          href={COOKIE_POLICY_LINK}
           className="text-xs font-semibold uppercase tracking-[0.12em] text-foreground underline decoration-foreground/25 underline-offset-4 transition-colors hover:text-foreground/70 hover:decoration-foreground/40"
         >
           {cmsData.learnMoreLinkText}
@@ -69,13 +109,19 @@ const CookieConsent: React.FC<CookieConsentProps> = ({ cmsData }) => {
 
         <div className="mt-6 flex gap-3">
           <button
-            onClick={() => handleConsent(false)}
+            onClick={() =>
+              showSettings
+                ? saveConsent(analyticsEnabled)
+                : setShowSettings(true)
+            }
             className="h-11 flex-1 rounded-lg border border-foreground/12 text-xs font-semibold uppercase tracking-[0.14em] text-foreground/55 transition-colors hover:border-foreground/25 hover:text-foreground"
           >
-            {cmsData.declineButtonText}
+            {showSettings
+              ? cmsData.saveSettingsButtonText
+              : cmsData.settingsButtonText}
           </button>
           <button
-            onClick={() => handleConsent(true)}
+            onClick={() => saveConsent(true)}
             className="h-11 flex-1 rounded-lg bg-foreground text-xs font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-foreground/90"
           >
             {cmsData.acceptButtonText}

@@ -192,14 +192,21 @@ export default async function HomePage() {
           </div>
           <div className="flex min-h-[146px] items-center justify-center p-6">
             {pageCms.aboutSection.hgkLogoUrl && (
-              <Image
-                src={pageCms.aboutSection.hgkLogoUrl}
-                alt={pageCms.aboutSection.hgkLogoAlt ?? ""}
-                width={360}
-                height={240}
-                unoptimized
-                className="h-auto w-full max-w-[108px] opacity-80 md:max-w-[132px]"
-              />
+              <Link
+                href="https://www.hgk.hr/"
+                target="_blank"
+                rel="noopener"
+                aria-label={pageCms.aboutSection.hgkLogoAlt ?? "HGK"}
+              >
+                <Image
+                  src={pageCms.aboutSection.hgkLogoUrl}
+                  alt={pageCms.aboutSection.hgkLogoAlt ?? ""}
+                  width={360}
+                  height={240}
+                  unoptimized
+                  className="h-auto w-full max-w-[108px] opacity-80 transition-opacity hover:opacity-100 md:max-w-[132px]"
+                />
+              </Link>
             )}
           </div>
         </div>

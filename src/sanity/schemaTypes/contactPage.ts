@@ -102,6 +102,24 @@ export const contactPage = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "whatsAppLabel",
+      title: "WhatsApp Label",
+      type: "localeString",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "whatsAppValue",
+      title: "WhatsApp Value",
+      type: "string",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "whatsAppHref",
+      title: "WhatsApp Href",
+      type: "string",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
       name: "companyEmailLabel",
       title: "Company Email Label",
       type: "localeString",

@@ -1,7 +1,6 @@
 import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/next";
 import { VisualEditing } from "next-sanity";
 import { draftMode } from "next/headers";
 import {
@@ -25,6 +24,7 @@ import {
   GoogleAnalytics,
   MicrosoftClarityAnalytics,
   MetaPixelAnalytics,
+  VercelAnalytics,
   JsonLd,
 } from "@/analytics";
 import { Toaster } from "@/shadcn/components/ui/sonner";
@@ -85,7 +85,7 @@ export default async function RootLayout({
               <Footer cmsData={footerCms} />
               {process.env.NODE_ENV === "production" && (
                 <>
-                  <Analytics />
+                  <VercelAnalytics />
                   <GoogleAnalytics />
                   <MicrosoftClarityAnalytics />
                   <MetaPixelAnalytics />

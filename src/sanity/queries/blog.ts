@@ -37,6 +37,7 @@ export interface Category {
 export interface Post {
   _id: string;
   title: string;
+  metaTitle?: string;
   metaDescription: string;
   slug: string;
   author: Author;
@@ -54,6 +55,7 @@ export interface Post {
 const postFields = groq`
   _id,
   "title": title[$lang],
+  "metaTitle": coalesce(metaTitle[$lang], title[$lang]),
   "metaDescription": metaDescription[$lang],
   "slug": slug.current,
   "author": author->{
@@ -69,7 +71,7 @@ const postFields = groq`
     "slug": slug.current
   },
   coverImage,
-  "coverImageAlt": coverImage.asset->altText[$lang],
+  "coverImageAlt": coalesce(coverImageAlt[$lang], coverImage.asset->altText[$lang]),
   publishedAt,
   "content": content[$lang],
   isPublished,

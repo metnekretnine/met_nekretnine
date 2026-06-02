@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { Metadata } from "next";
-import { PortableText, SubPageHero } from "@/components";
+import { FaqSection, PortableText, SubPageHero } from "@/components";
 import { fetchLandlordsPageCms } from "@/sanity/queries";
 import { getLang, generatePageMetadata } from "@/lib/utils";
 import { PageBreadcrumbJsonLd } from "@/analytics";
@@ -46,6 +46,19 @@ export default async function LandlordsPage() {
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
               {pageCms.introSection.text}
             </p>
+            <div className="mt-8 rounded-lg border border-[#b9c7d1] bg-[#eef3f6] p-6">
+              <h3 className="text-xl font-semibold tracking-tight">
+                {pageCms.whyMetBox.title}
+              </h3>
+              <ul className="mt-5 space-y-3">
+                {pageCms.whyMetBox.items.map((item) => (
+                  <li key={item.text} className="flex gap-3 text-foreground/80">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-foreground" />
+                    <span>{item.text}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {pageCms.processSection.items.map((item) => (
@@ -94,6 +107,10 @@ export default async function LandlordsPage() {
           </Link>
         </div>
       </section>
+
+      {pageCms.faqSection && (
+        <FaqSection data={pageCms.faqSection} className="py-16 md:py-24" />
+      )}
     </>
   );
 }

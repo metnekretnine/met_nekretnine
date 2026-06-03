@@ -38,50 +38,72 @@ export default async function AboutAgencyPage() {
         imageAlt={pageCms.heroBackgroundImageAlt}
       />
 
-      <section className="container mx-auto px-global py-16 md:py-24">
-        <div className="grid gap-12 md:grid-cols-[1.08fr_0.92fr]">
-          <div className="max-w-3xl space-y-5 text-lg leading-relaxed text-muted-foreground">
+      <section className="container mx-auto px-global py-10 md:py-14">
+        <div className="max-w-4xl">
+          <div className="max-w-3xl space-y-4 text-lg leading-relaxed text-muted-foreground">
             <PortableText value={pageCms.contentSection.content} />
           </div>
 
-          <aside className="grid gap-4">
-            <div className="rounded-lg border border-foreground/10 bg-[#f5f7f8] p-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-foreground/45">
-                {pageCms.directorSection.label}
-              </p>
-              <h2 className="mt-4 text-2xl font-semibold tracking-tight">
-                {pageCms.directorSection.name}
+          {pageCms.hgkSection.logoUrl && (
+            <Link
+              href="https://www.hgk.hr/"
+              target="_blank"
+              rel="noopener"
+              aria-label={pageCms.hgkSection.logoAlt ?? "HGK"}
+              className="mt-7 inline-flex"
+            >
+              <Image
+                src={pageCms.hgkSection.logoUrl}
+                alt={pageCms.hgkSection.logoAlt ?? ""}
+                width={360}
+                height={240}
+                unoptimized
+                className="h-auto w-[96px] opacity-75 transition-opacity hover:opacity-100 md:w-[112px]"
+              />
+            </Link>
+          )}
+        </div>
+      </section>
+
+      <section className="bg-[#f5f7f8] py-12 md:py-14">
+        <div className="container mx-auto grid gap-6 px-global lg:grid-cols-[0.9fr_1.1fr]">
+          <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
+            {pageCms.biographySection.title}
+          </h2>
+          <div>
+            <h3 className="text-3xl font-semibold tracking-tight">
+              {pageCms.biographySection.name}
+            </h3>
+            <div className="mt-5 space-y-3 text-lg leading-relaxed text-muted-foreground">
+              {pageCms.biographySection.education && (
+                <p>{pageCms.biographySection.education}</p>
+              )}
+              {pageCms.biographySection.credential && (
+                <p>{pageCms.biographySection.credential}</p>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {pageCms.ctaSection.title &&
+        pageCms.ctaSection.text &&
+        pageCms.ctaSection.href && (
+          <section className="bg-[#dfe7ee] py-12 text-foreground md:py-14">
+            <div className="container mx-auto flex flex-col items-start justify-between gap-6 px-global md:flex-row md:items-center">
+              <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
+                {pageCms.ctaSection.title}
               </h2>
               <Link
-                href={pageCms.directorSection.linkedinHref}
-                className="mt-8 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em]"
+                href={pageCms.ctaSection.href}
+                className="inline-flex h-12 items-center justify-center gap-3 rounded-lg bg-foreground px-6 text-sm font-semibold uppercase tracking-[0.14em] text-white transition-colors hover:bg-foreground/90"
               >
-                {pageCms.directorSection.linkedinText}
+                {pageCms.ctaSection.text}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
-            {pageCms.hgkSection.logoUrl && (
-              <div className="flex rounded-lg border border-foreground/10 bg-white px-6 py-7 md:justify-center">
-                <Link
-                  href="https://www.hgk.hr/"
-                  target="_blank"
-                  rel="noopener"
-                  aria-label={pageCms.hgkSection.logoAlt ?? "HGK"}
-                >
-                  <Image
-                    src={pageCms.hgkSection.logoUrl}
-                    alt={pageCms.hgkSection.logoAlt ?? ""}
-                    width={360}
-                    height={240}
-                    unoptimized
-                    className="h-auto w-full max-w-[118px] opacity-80 transition-opacity hover:opacity-100 md:max-w-[132px]"
-                  />
-                </Link>
-              </div>
-            )}
-          </aside>
-        </div>
-      </section>
+          </section>
+        )}
     </>
   );
 }

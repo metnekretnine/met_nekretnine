@@ -30,7 +30,7 @@ export const SubPageHero: React.FC<SubPageHeroProps> = ({
             src={urlFor(backgroundImage).url()}
             alt={imageAlt || title}
             fill
-            className="object-cover object-top"
+            className="object-cover object-top md:object-[center_60%]"
             priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 z-10" />

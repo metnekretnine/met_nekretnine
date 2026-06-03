@@ -46,7 +46,7 @@ export default async function LandlordsPage() {
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
               {pageCms.introSection.text}
             </p>
-            <div className="mt-8 rounded-lg border border-[#b9c7d1] bg-[#eef3f6] p-6">
+            <div className="mt-8 rounded-lg border border-foreground/10 bg-[#f5f7f8] p-6">
               <h3 className="text-xl font-semibold tracking-tight">
                 {pageCms.whyMetBox.title}
               </h3>

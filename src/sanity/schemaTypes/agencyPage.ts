@@ -26,6 +26,16 @@ export const agencyPage = defineType({
       options: { collapsible: true, collapsed: false },
     },
     {
+      name: "biographySection",
+      title: "Biography Section",
+      options: { collapsible: true, collapsed: false },
+    },
+    {
+      name: "ctaSection",
+      title: "CTA Section",
+      options: { collapsible: true, collapsed: false },
+    },
+    {
       name: "seo",
       title: "SEO",
       options: { collapsible: true, collapsed: false },
@@ -59,6 +69,12 @@ export const agencyPage = defineType({
       type: "localeString",
       fieldset: "heroSection",
       validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "contentTitle",
+      title: "Content Title",
+      type: "localeString",
+      fieldset: "contentSection",
     }),
     defineField({
       name: "content",
@@ -117,6 +133,48 @@ export const agencyPage = defineType({
       type: "localeString",
       fieldset: "hgkSection",
       validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "biographyTitle",
+      title: "Biography Title",
+      type: "localeString",
+      fieldset: "biographySection",
+    }),
+    defineField({
+      name: "biographyName",
+      title: "Biography Name",
+      type: "string",
+      fieldset: "biographySection",
+    }),
+    defineField({
+      name: "biographyEducation",
+      title: "Biography Education",
+      type: "localeString",
+      fieldset: "biographySection",
+    }),
+    defineField({
+      name: "biographyCredential",
+      title: "Biography Credential",
+      type: "localeString",
+      fieldset: "biographySection",
+    }),
+    defineField({
+      name: "ctaTitle",
+      title: "CTA Title",
+      type: "localeString",
+      fieldset: "ctaSection",
+    }),
+    defineField({
+      name: "ctaText",
+      title: "CTA Text",
+      type: "localeString",
+      fieldset: "ctaSection",
+    }),
+    defineField({
+      name: "ctaHref",
+      title: "CTA Href",
+      type: "string",
+      fieldset: "ctaSection",
     }),
     defineField({
       name: "metaTitle",

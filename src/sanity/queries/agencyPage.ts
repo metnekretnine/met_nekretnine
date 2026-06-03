@@ -11,6 +11,7 @@ export interface AgencyPageCMS {
   heroBackgroundImage: SanityImageSource;
   heroBackgroundImageAlt: string;
   contentSection: {
+    title?: string;
     content: PortableTextBlock[];
   };
   directorSection: {
@@ -22,6 +23,17 @@ export interface AgencyPageCMS {
   hgkSection: {
     logoUrl?: string;
     logoAlt?: string;
+  };
+  biographySection: {
+    title?: string;
+    name?: string;
+    education?: string;
+    credential?: string;
+  };
+  ctaSection: {
+    title?: string;
+    text?: string;
+    href?: string;
   };
   metaTitle: string;
   metaDescription: string;
@@ -35,6 +47,7 @@ const agencyPageQuery = groq`
     heroBackgroundImage,
     "heroBackgroundImageAlt": heroBackgroundImageAlt[$lang],
     "contentSection": {
+      "title": contentTitle[$lang],
       "content": content[$lang]
     },
     "directorSection": {
@@ -46,6 +59,17 @@ const agencyPageQuery = groq`
     "hgkSection": {
       "logoUrl": select($lang == "en" => hgkLogoEn.asset->url, hgkLogoHr.asset->url),
       "logoAlt": hgkLogoAlt[$lang]
+    },
+    "biographySection": {
+      "title": biographyTitle[$lang],
+      "name": biographyName,
+      "education": biographyEducation[$lang],
+      "credential": biographyCredential[$lang]
+    },
+    "ctaSection": {
+      "title": ctaTitle[$lang],
+      "text": ctaText[$lang],
+      "href": ctaHref
     },
     "metaTitle": metaTitle[$lang],
     "metaDescription": metaDescription[$lang],

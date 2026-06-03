@@ -85,7 +85,7 @@ export default async function PostPage({ params }: PostPageProps) {
           src={coverImageUrl}
           alt={post.coverImageAlt || post.title}
           fill
-          className="object-cover object-center"
+          className="object-cover object-center md:object-[center_65%]"
           sizes="100vw"
           priority
         />

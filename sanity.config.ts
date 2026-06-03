@@ -17,14 +17,14 @@ export default defineConfig({
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
   schema,
   plugins: [
-    presentationTool({
+    structureTool({ structure }),
+        presentationTool({
       previewUrl: {
         previewMode: {
           enable: "/api/draft-mode/enable",
         },
       },
     }),
-    structureTool({ structure }),
     media(),
     googleMapsInput({
       apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!,

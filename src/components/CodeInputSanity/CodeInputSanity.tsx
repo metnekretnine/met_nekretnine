@@ -24,6 +24,7 @@ export function CodeInputSanity(props: StringInputProps) {
   const client = useClient({ apiVersion: API_VERSION });
   const document = useFormValue([]) as { _id?: string } | null;
   const [message, setMessage] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const documentId = typeof document?._id === "string" ? document._id : undefined;
 
@@ -52,15 +53,23 @@ export function CodeInputSanity(props: StringInputProps) {
 
     let cancelled = false;
 
+    setIsGenerating(true);
+
     generateUniqueCode()
       .then((code) => {
         if (!cancelled) {
           onChange(set(code));
+          setMessage(null);
         }
       })
       .catch(() => {
         if (!cancelled) {
           setMessage("Nije moguće automatski generirati šifru.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsGenerating(false);
         }
       });
 
@@ -71,6 +80,7 @@ export function CodeInputSanity(props: StringInputProps) {
 
   const handleGenerate = useCallback(() => {
     setMessage("Generiranje šifre...");
+    setIsGenerating(true);
 
     generateUniqueCode()
       .then((code) => {
@@ -79,26 +89,31 @@ export function CodeInputSanity(props: StringInputProps) {
       })
       .catch(() => {
         setMessage("Nije moguće generirati jedinstvenu šifru.");
+      })
+      .finally(() => {
+        setIsGenerating(false);
       });
   }, [generateUniqueCode, onChange]);
 
   return (
     <Stack space={3}>
-      {props.renderDefault(props)}
+      {props.renderDefault({ ...props, readOnly: true })}
       {message && (
         <Text size={1} muted>
           {message}
         </Text>
       )}
-      <Flex>
-        <Button
-          text="Generiraj šifru"
-          tone="primary"
-          mode="ghost"
-          disabled={readOnly}
-          onClick={handleGenerate}
-        />
-      </Flex>
+      {!value && (
+        <Flex>
+          <Button
+            text={isGenerating ? "Generiranje..." : "Generiraj šifru"}
+            tone="primary"
+            mode="ghost"
+            disabled={readOnly || isGenerating}
+            onClick={handleGenerate}
+          />
+        </Flex>
+      )}
     </Stack>
   );
 }

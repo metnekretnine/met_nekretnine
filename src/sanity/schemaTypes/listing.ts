@@ -10,7 +10,7 @@ import {
   FEATURED_LISTINGS_COUNT_QUERY,
   MAX_FEATURED_LISTINGS,
 } from "@/lib/featuredListings";
-import { generateListingCode, LISTING_CODE_LENGTH } from "@/lib/listingCode";
+import { LISTING_CODE_LENGTH } from "@/lib/listingCode";
 import {
   getNjuskaloImageSyncState,
   NJUSKALO_WATERMARK_VERSION,
@@ -244,12 +244,11 @@ export const listing = defineType({
       title: "Šifra nekretnine",
       type: "string",
       description:
-        "Automatski generirana numerička šifra. Zaključava se nakon prvog spremanja oglasa.",
+        "Automatski generirana jedinstvena numerička šifra. Zaključava se nakon generiranja.",
       components: {
         input: CodeInputSanity,
       },
-      readOnly: ({ document }) => Boolean(document?._createdAt),
-      initialValue: generateListingCode,
+      readOnly: ({ value }) => Boolean(value),
       validation: (rule) =>
         rule
           .required()

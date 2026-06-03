@@ -119,7 +119,7 @@ export const Gallery = ({
         <div
           ref={mainRef}
           onScroll={handleMainScroll}
-          className="relative aspect-[4/3] flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory bg-black rounded-lg"
+          className="relative aspect-[4/3] flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory bg-[#f5f7f8] rounded-lg"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {items.map((item, idx) => (
@@ -243,7 +243,7 @@ const GallerySlide = ({
     const { width, height } = getSanityImageDimensions(item.source);
 
     return (
-      <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-black">
+      <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-[#f5f7f8]">
         <Image
           src={urlFor(item.source).url()}
           alt={title}

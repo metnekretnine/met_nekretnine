@@ -6,7 +6,6 @@ import type {
 import React, { ComponentType } from "react";
 import {
   CaseIcon,
-  CogIcon,
   ComposeIcon,
   DocumentsIcon,
   EnvelopeIcon,
@@ -30,7 +29,7 @@ const singletonListItem = (
     .child(S.document().schemaType(schemaType).documentId(schemaType))
     .icon(icon);
 
-// List of all schemas that are handled manually
+// Popis shema koje se ručno prikazuju u strukturi
 const manuallyHandledSchemas = [
   "metHomePage",
   "apartmentsRentPage",
@@ -70,7 +69,7 @@ const manuallyHandledSchemas = [
 
 export const structure: StructureResolver = (S) =>
   S.list()
-    .title("Content")
+    .title("Sadržaj")
     .items([
       // Stanovi
       S.listItem()
@@ -141,30 +140,30 @@ export const structure: StructureResolver = (S) =>
             ]),
         ),
 
-      // Stanovi Elements
+      // Elementi za stanove
       S.listItem()
-        .title("Stanovi Elements")
+        .title("Elementi za stanove")
         .icon(CaseIcon)
         .child(
           S.list()
-            .title("Stanovi Elements")
+            .title("Elementi za stanove")
             .items([
               singletonListItem(
                 S,
-                "Listing Explorer Config",
+                "Konfiguracija pretrage stanova",
                 "listingExplorerSection",
               ),
             ]),
         ),
       S.divider(),
 
-      // Pages
+      // Stranice
       S.listItem()
-        .title("Pages")
+        .title("Stranice")
         .icon(DocumentsIcon)
         .child(
           S.list()
-            .title("Pages")
+            .title("Stranice")
             .items([
               singletonListItem(
                 S,
@@ -172,69 +171,69 @@ export const structure: StructureResolver = (S) =>
                 "listingDetailsPage",
                 HomeIcon,
               ),
-              singletonListItem(S, "MET Home Page", "metHomePage", HomeIcon),
+              singletonListItem(S, "Početna stranica", "metHomePage", HomeIcon),
               singletonListItem(
                 S,
-                "Stanovi za najam Page",
+                "Stranica Stanovi za najam",
                 "apartmentsRentPage",
                 HomeIcon,
               ),
               singletonListItem(
                 S,
-                "Za najmodavce Page",
+                "Stranica Za najmodavce",
                 "landlordsPage",
                 HomeIcon,
               ),
               singletonListItem(
                 S,
-                "Za najmoprimce Page",
+                "Stranica Za najmoprimce",
                 "tenantsPage",
                 HomeIcon,
               ),
               singletonListItem(
                 S,
-                "Ponudite stan Page",
+                "Stranica Ponudite stan",
                 "submitApartmentPage",
                 EnvelopeIcon,
               ),
-              singletonListItem(S, "O agenciji Page", "agencyPage", UserIcon),
-              singletonListItem(S, "Opći uvjeti Page", "termsPage", LockIcon),
+              singletonListItem(S, "Stranica O agenciji", "agencyPage", UserIcon),
+              singletonListItem(S, "Stranica Opći uvjeti", "termsPage", LockIcon),
               singletonListItem(
                 S,
-                "Politika kolačića Page",
+                "Stranica Politika kolačića",
                 "cookiePolicyPage",
                 LockIcon,
               ),
-              singletonListItem(S, "Contact Page", "contactPage", EnvelopeIcon),
+              singletonListItem(S, "Stranica Kontakt", "contactPage", EnvelopeIcon),
               singletonListItem(
                 S,
-                "Privacy Policy Page",
+                "Stranica Politika privatnosti",
                 "privacyPolicyPage",
                 LockIcon,
               ),
               singletonListItem(
                 S,
-                "Not Found Page",
+                "Stranica 404",
                 "notFoundPage",
                 HelpCircleIcon,
               ),
               singletonListItem(
                 S,
-                "Maintenance Page",
+                "Stranica održavanja",
                 "maintenancePage",
                 WrenchIcon,
               ),
               S.divider(),
-              singletonListItem(S, "Blog Page", "blogPage", ComposeIcon),
+              singletonListItem(S, "Stranica Blog", "blogPage", ComposeIcon),
               singletonListItem(
                 S,
-                "Blog Category Page",
+                "Stranica Blog kategorije",
                 "blogCategoryPage",
                 ComposeIcon,
               ),
               singletonListItem(
                 S,
-                "Blog Author Page",
+                "Stranica Blog autora",
                 "blogAuthorPage",
                 ComposeIcon,
               ),
@@ -250,19 +249,19 @@ export const structure: StructureResolver = (S) =>
           S.list()
             .title("Blog")
             .items([
-              S.documentTypeListItem("post").title("Posts"),
-              S.documentTypeListItem("author").title("Authors"),
-              S.documentTypeListItem("category").title("Categories"),
+              S.documentTypeListItem("post").title("Objave"),
+              S.documentTypeListItem("author").title("Autori"),
+              S.documentTypeListItem("category").title("Kategorije"),
               S.divider(),
-              // Dynamic lists
+              // Dinamičke liste
               S.listItem()
-                .title("Posts by Category")
+                .title("Objave po kategoriji")
                 .child(
                   S.documentTypeList("category")
-                    .title("Filter by Category")
+                    .title("Filtriraj po kategoriji")
                     .child((categoryId) =>
                       S.documentList()
-                        .title("Posts")
+                        .title("Objave")
                         .filter(
                           '_type == "post" && $categoryId in categories[]._ref',
                         )
@@ -270,112 +269,95 @@ export const structure: StructureResolver = (S) =>
                     ),
                 ),
               S.listItem()
-                .title("Posts by Author")
+                .title("Objave po autoru")
                 .child(
                   S.documentTypeList("author")
-                    .title("Filter by Author")
+                    .title("Filtriraj po autoru")
                     .child((authorId) =>
                       S.documentList()
-                        .title("Posts")
+                        .title("Objave")
                         .filter('_type == "post" && $authorId == author._ref')
                         .params({ authorId }),
                     ),
                 ),
               S.listItem()
-                .title("Top Picks Posts")
+                .title("Izdvojene objave")
                 .child(
                   S.documentList()
-                    .title("Top Picks Posts")
+                    .title("Izdvojene objave")
                     .filter('_type == "post" && isTopPick == true'),
                 ),
             ]),
         ),
 
-      // Blog Elements
+      // Blog elementi
       S.listItem()
-        .title("Blog Elements")
+        .title("Blog elementi")
         .icon(ComposeIcon)
         .child(
           S.list()
-            .title("Blog Elements")
+            .title("Blog elementi")
             .items([
-              singletonListItem(S, "Top Picks", "topPicksSection"),
-              singletonListItem(S, "Blog Posts", "blogPostsSection"),
+              singletonListItem(S, "Izdvojeno", "topPicksSection"),
+              singletonListItem(S, "Blog objave", "blogPostsSection"),
               singletonListItem(
                 S,
-                "Categories Filter",
+                "Filter kategorija",
                 "categoriesFilterSection",
               ),
               singletonListItem(
                 S,
-                "Recent Posts Section",
+                "Sekcija nedavnih objava",
                 "recentPostsSection",
               ),
             ]),
         ),
       S.divider(),
 
-      // Site Elements
+      // Elementi stranice
       S.listItem()
-        .title("Site Elements")
+        .title("Elementi stranice")
         .icon(WrenchIcon)
         .child(
           S.list()
-            .title("Site Elements")
+            .title("Elementi stranice")
             .items([
-              singletonListItem(S, "Navigation", "navigationSection"),
-              singletonListItem(S, "Footer", "footerSection"),
-              singletonListItem(S, "Cookie Consent", "cookieConsentSection"),
-              singletonListItem(S, "WhatsApp Button", "whatsAppButtonSection"),
-              singletonListItem(
-                S,
-                "Notification Bar",
-                "notificationBarSection",
-              ),
+              singletonListItem(S, "Navigacija", "navigationSection"),
+              singletonListItem(S, "Podnožje", "footerSection"),
+              singletonListItem(S, "Privola za kolačiće", "cookieConsentSection"),
             ]),
         ),
       S.divider(),
 
-      // Contact Elements
+      // Kontakt elementi
       S.listItem()
-        .title("Contact Elements")
+        .title("Kontakt elementi")
         .icon(EnvelopeIcon)
         .child(
           S.list()
-            .title("Contact Elements")
+            .title("Kontakt elementi")
             .items([
-              singletonListItem(S, "Contact Form", "contactFormSection"),
+              singletonListItem(S, "Kontakt forma", "contactFormSection"),
             ]),
         ),
       S.divider(),
 
-      // Call To Action
+      // Poziv na akciju
       singletonListItem(
         S,
-        "Call To Action Section",
+        "Poziv na akciju",
         "ctaSection",
         DocumentsIcon,
       ),
       S.divider(),
 
-      // Site Configuration
-      S.listItem()
-        .title("Site Configuration")
-        .icon(CogIcon)
-        .child(
-          S.document()
-            .schemaType("configurationSection")
-            .documentId("configurationSection"),
-        ),
-      S.divider(),
-
-      // Display any remaining schemas that are not handled manually
+      // Prikaži preostale tipove shema koji nisu ručno obrađeni
       ...S.documentTypeListItems().filter(
         (listItem) => !manuallyHandledSchemas.includes(listItem.getId()!),
       ),
     ]);
 
-// Adds a JSON preview tab to all document types
+// Dodaje JSON pregled svim tipovima dokumenata
 // https://www.sanity.io/docs/create-custom-document-views-with-structure-builder
 export const defaultDocumentNode: DefaultDocumentNodeResolver = (S) => {
   return S.document().views([
@@ -385,7 +367,7 @@ export const defaultDocumentNode: DefaultDocumentNodeResolver = (S) => {
         React.createElement(
           "div",
           { style: { padding: "2rem" } },
-          React.createElement("h2", null, "JSON Data"),
+          React.createElement("h2", null, "JSON podaci"),
           React.createElement(
             "pre",
             null,

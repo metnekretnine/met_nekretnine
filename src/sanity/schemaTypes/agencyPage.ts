@@ -77,6 +77,18 @@ export const agencyPage = defineType({
       fieldset: "contentSection",
     }),
     defineField({
+      name: "introContent",
+      title: "Intro Content",
+      type: "localeRichText",
+      fieldset: "contentSection",
+    }),
+    defineField({
+      name: "agencyMainContent",
+      title: "Agency Main Content",
+      type: "localeRichText",
+      fieldset: "contentSection",
+    }),
+    defineField({
       name: "content",
       title: "Content",
       type: "localeRichText",
@@ -130,6 +142,13 @@ export const agencyPage = defineType({
     defineField({
       name: "hgkLogoAlt",
       title: "HGK Logo Alt",
+      type: "localeString",
+      fieldset: "hgkSection",
+      validation: (rule) => rule.required(),
+    }),
+    defineField({
+      name: "hgkText",
+      title: "HGK Text",
       type: "localeString",
       fieldset: "hgkSection",
       validation: (rule) => rule.required(),

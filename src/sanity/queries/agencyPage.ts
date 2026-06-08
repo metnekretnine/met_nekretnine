@@ -12,6 +12,8 @@ export interface AgencyPageCMS {
   heroBackgroundImageAlt: string;
   contentSection: {
     title?: string;
+    introContent?: PortableTextBlock[];
+    agencyMainContent?: PortableTextBlock[];
     content: PortableTextBlock[];
   };
   directorSection: {
@@ -21,6 +23,7 @@ export interface AgencyPageCMS {
     linkedinHref: string;
   };
   hgkSection: {
+    text?: string;
     logoUrl?: string;
     logoAlt?: string;
   };
@@ -48,6 +51,8 @@ const agencyPageQuery = groq`
     "heroBackgroundImageAlt": heroBackgroundImageAlt[$lang],
     "contentSection": {
       "title": contentTitle[$lang],
+      "introContent": introContent[$lang],
+      "agencyMainContent": agencyMainContent[$lang],
       "content": content[$lang]
     },
     "directorSection": {
@@ -57,6 +62,7 @@ const agencyPageQuery = groq`
       "linkedinHref": linkedinHref
     },
     "hgkSection": {
+      "text": hgkText[$lang],
       "logoUrl": select($lang == "en" => hgkLogoEn.asset->url, hgkLogoHr.asset->url),
       "logoAlt": hgkLogoAlt[$lang]
     },

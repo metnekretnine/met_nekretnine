@@ -38,32 +38,60 @@ export default async function AboutAgencyPage() {
         imageAlt={pageCms.heroBackgroundImageAlt}
       />
 
-      <section className="container mx-auto px-global py-10 md:py-14">
-        <div className="max-w-4xl">
-          <div className="max-w-3xl space-y-4 text-lg leading-relaxed text-muted-foreground">
-            <PortableText value={pageCms.contentSection.content} />
-          </div>
+      {pageCms.contentSection.introContent &&
+        pageCms.contentSection.introContent.length > 0 && (
+          <section className="container mx-auto px-global py-10 md:py-14">
+            <div className="max-w-4xl">
+              <div className="max-w-3xl text-lg leading-relaxed text-muted-foreground">
+                <PortableText value={pageCms.contentSection.introContent} />
+              </div>
+            </div>
+          </section>
+        )}
 
-          {pageCms.hgkSection.logoUrl && (
-            <Link
-              href="https://www.hgk.hr/"
-              target="_blank"
-              rel="noopener"
-              aria-label={pageCms.hgkSection.logoAlt ?? "HGK"}
-              className="mt-7 inline-flex"
-            >
-              <Image
-                src={pageCms.hgkSection.logoUrl}
-                alt={pageCms.hgkSection.logoAlt ?? ""}
-                width={360}
-                height={240}
-                unoptimized
-                className="h-auto w-[96px] opacity-75 transition-opacity hover:opacity-100 md:w-[112px]"
-              />
-            </Link>
-          )}
-        </div>
-      </section>
+      {pageCms.contentSection.agencyMainContent &&
+        pageCms.contentSection.agencyMainContent.length > 0 && (
+          <section className="bg-[#eef3f6] py-10 md:py-14">
+            <div className="container mx-auto px-global">
+              <div className="max-w-4xl text-foreground">
+                <PortableText
+                  value={pageCms.contentSection.agencyMainContent}
+                  textSize="text-lg md:text-xl"
+                />
+              </div>
+            </div>
+          </section>
+        )}
+
+      {pageCms.hgkSection.logoUrl && pageCms.hgkSection.text && (
+        <section className="bg-white py-8 md:py-10">
+          <div className="container mx-auto px-global">
+            <div className="flex max-w-4xl flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="w-[78%] max-w-xl text-lg font-medium leading-relaxed text-foreground sm:w-auto md:text-xl">
+                  {pageCms.hgkSection.text}
+                </p>
+              </div>
+              <Link
+                href="https://www.hgk.hr/"
+                target="_blank"
+                rel="noopener"
+                aria-label={pageCms.hgkSection.logoAlt ?? "HGK"}
+                className="inline-flex w-fit shrink-0 transition-opacity hover:opacity-80"
+              >
+                <Image
+                  src={pageCms.hgkSection.logoUrl}
+                  alt={pageCms.hgkSection.logoAlt ?? ""}
+                  width={360}
+                  height={240}
+                  unoptimized
+                  className="h-auto w-[96px] md:w-[112px]"
+                />
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
 
       <section className="bg-[#f5f7f8] py-12 md:py-14">
         <div className="container mx-auto grid gap-6 px-global lg:grid-cols-[0.9fr_1.1fr]">
@@ -81,6 +109,9 @@ export default async function AboutAgencyPage() {
               {pageCms.biographySection.credential && (
                 <p>{pageCms.biographySection.credential}</p>
               )}
+            </div>
+            <div className="mt-8 max-w-3xl text-lg leading-relaxed text-muted-foreground">
+              <PortableText value={pageCms.contentSection.content} />
             </div>
           </div>
         </div>

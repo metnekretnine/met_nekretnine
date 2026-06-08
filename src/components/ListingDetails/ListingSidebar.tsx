@@ -30,7 +30,7 @@ export const ListingSidebar = ({
     ? `mailto:${listing.agent.email}?subject=${encodeURIComponent(
         `Upit za stan: ${listing.title}`,
       )}`
-    : "mailto:info@met.hr";
+    : "mailto:maja@metnekretnine.hr";
 
   return (
     <div className="w-full lg:w-1/3">

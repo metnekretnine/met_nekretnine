@@ -32,6 +32,7 @@ export interface AgencyPageCMS {
     name?: string;
     education?: string;
     credential?: string;
+    content?: PortableTextBlock[];
   };
   ctaSection: {
     title?: string;
@@ -70,7 +71,8 @@ const agencyPageQuery = groq`
       "title": biographyTitle[$lang],
       "name": biographyName,
       "education": biographyEducation[$lang],
-      "credential": biographyCredential[$lang]
+      "credential": biographyCredential[$lang],
+      "content": biographyContent[$lang]
     },
     "ctaSection": {
       "title": ctaTitle[$lang],

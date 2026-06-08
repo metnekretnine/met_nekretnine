@@ -56,7 +56,7 @@ export default async function AboutAgencyPage() {
               <div className="max-w-4xl text-foreground">
                 <PortableText
                   value={pageCms.contentSection.agencyMainContent}
-                  textSize="text-lg md:text-xl"
+                  textSize="text-base md:text-lg"
                 />
               </div>
             </div>
@@ -110,9 +110,12 @@ export default async function AboutAgencyPage() {
                 <p>{pageCms.biographySection.credential}</p>
               )}
             </div>
-            <div className="mt-8 max-w-3xl text-lg leading-relaxed text-muted-foreground">
-              <PortableText value={pageCms.contentSection.content} />
-            </div>
+            {pageCms.biographySection.content &&
+              pageCms.biographySection.content.length > 0 && (
+                <div className="mt-8 max-w-3xl text-lg leading-relaxed text-muted-foreground">
+                  <PortableText value={pageCms.biographySection.content} />
+                </div>
+              )}
           </div>
         </div>
       </section>

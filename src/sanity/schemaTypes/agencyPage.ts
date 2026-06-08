@@ -178,6 +178,12 @@ export const agencyPage = defineType({
       fieldset: "biographySection",
     }),
     defineField({
+      name: "biographyContent",
+      title: "Biography Content",
+      type: "localeRichText",
+      fieldset: "biographySection",
+    }),
+    defineField({
       name: "ctaTitle",
       title: "CTA Title",
       type: "localeString",

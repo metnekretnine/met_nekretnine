@@ -23,7 +23,7 @@ const COMPANY_LEGAL_NAME = "MET d.o.o. za poslovanje nekretninama";
 const COMPANY_TAX_ID = "47926577116";
 const COMPANY_COURT_ID = "081546123";
 const COMPANY_STATISTICAL_ID = "05871867";
-const COMPANY_PHONE = "+385914447071";
+const COMPANY_PHONE = "+385916060866";
 const COMPANY_FOUNDING_DATE = "2023-11-15";
 const COMPANY_ADDRESS = {
   streetAddress: "Savska cesta 32",

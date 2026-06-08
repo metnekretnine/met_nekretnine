@@ -17,9 +17,8 @@ export const LOCALE_COOKIE_NAME = "NEXT_LOCALE";
 export const COOKIE_CONSENT_NAME = "cookie_consent";
 
 export const COMPANY_NAME = "MET d.o.o.";
-export const COMPANY_PHONE_DISPLAY = "+385 91 444 7071";
-export const COMPANY_PHONE_HREF = "tel:+385914447071";
-export const COMPANY_WHATSAPP_NUMBER = "385914447071";
+export const COMPANY_PHONE_HREF = "tel:+385916060866";
+export const COMPANY_WHATSAPP_NUMBER = "385916060866";
 export const COMPANY_WHATSAPP_HREF = `https://wa.me/${COMPANY_WHATSAPP_NUMBER}`;
 export const DEFAULT_OG_IMAGE = "/default-og-image.webp";
 

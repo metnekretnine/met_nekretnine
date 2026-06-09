@@ -80,6 +80,23 @@ export const footerSection = defineType({
       ],
     }),
     defineField({
+      name: "facebook",
+      title: "Facebook",
+      type: "object",
+      fields: [
+        defineField({
+          name: "href",
+          title: "Href",
+          type: "string",
+        }),
+        defineField({
+          name: "ariaLabel",
+          title: "Aria Label",
+          type: "string",
+        }),
+      ],
+    }),
+    defineField({
       name: "sections",
       title: "Sections",
       type: "array",

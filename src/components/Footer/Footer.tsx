@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Instagram, Linkedin, Mail, Phone } from "lucide-react";
+import { Facebook, Instagram, Linkedin, Mail, Phone } from "lucide-react";
 import { LogoCompany } from "../Icons/LogoCompany";
 import { FooterSectionCMS } from "@/sanity/queries";
 import { usePathname } from "next/navigation";
@@ -18,6 +18,7 @@ export const Footer: React.FC<Props> = ({ cmsData }) => {
   const socialIcons: { [key: string]: React.ReactNode } = {
     LinkedIn: <Linkedin className="h-4 w-4" />,
     Instagram: <Instagram className="h-4 w-4" />,
+    Facebook: <Facebook className="h-4 w-4" />,
   };
 
   if (EXCLUDED_PATHS.some((path) => pathname.startsWith(path))) {
@@ -83,6 +84,17 @@ export const Footer: React.FC<Props> = ({ cmsData }) => {
               >
                 {socialIcons.Instagram}
               </Link>
+              {cmsData.facebook?.href && (
+                <Link
+                  href={cmsData.facebook.href}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+                  aria-label={cmsData.facebook.ariaLabel ?? "Facebook"}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {socialIcons.Facebook}
+                </Link>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3">

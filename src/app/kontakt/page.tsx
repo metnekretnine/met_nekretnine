@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowRight,
   Building2,
+  Facebook,
   Hash,
   Instagram,
   Linkedin,
@@ -106,6 +107,13 @@ export default async function ContactPage() {
                 label={contactCms.linkedinLabel}
                 icon={<Linkedin className="h-5 w-5" />}
               />
+              {contactCms.facebookHref && (
+                <SocialIconLink
+                  href={contactCms.facebookHref}
+                  label={contactCms.facebookLabel ?? "Facebook"}
+                  icon={<Facebook className="h-5 w-5" />}
+                />
+              )}
             </div>
           </div>
 

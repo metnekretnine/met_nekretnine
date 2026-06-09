@@ -8,6 +8,11 @@ export interface SocialLink {
   ariaLabel: string;
 }
 
+export interface OptionalSocialLink {
+  href?: string;
+  ariaLabel?: string;
+}
+
 export interface FooterLink {
   text: string;
   href: string;
@@ -27,6 +32,7 @@ export interface FooterSectionCMS {
   phone: string;
   linkedin: SocialLink;
   instagram: SocialLink;
+  facebook?: OptionalSocialLink;
   sections: FooterSection[];
   copyright: string;
 }
@@ -46,6 +52,10 @@ const footerQuery = groq`
     "instagram": {
       "href": instagram.href,
       "ariaLabel": instagram.ariaLabel
+    },
+    "facebook": {
+      "href": facebook.href,
+      "ariaLabel": facebook.ariaLabel
     },
     "sections": sections[] {
       "title": title[$lang],

@@ -156,6 +156,16 @@ export const contactPage = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: "facebookLabel",
+      title: "Facebook Label",
+      type: "localeString",
+    }),
+    defineField({
+      name: "facebookHref",
+      title: "Facebook Href",
+      type: "string",
+    }),
+    defineField({
       name: "infoLabel",
       title: "Info Label (e.g. OIB / MBS)",
       type: "localeString",

@@ -72,11 +72,8 @@ export default async function HomePage() {
       </section>
       {pageCms.heroSection.backgroundImages.length > 0 && <PhotoCredit />}
 
-      <section className="container mx-auto px-global py-20 md:py-28">
+      <section className="container mx-auto px-global pt-12 pb-20 md:pt-16 md:pb-28">
         <div className="max-w-4xl">
-          <p className="mb-6 text-xs font-semibold uppercase tracking-[0.24em] text-foreground/45">
-            {pageCms.positioningSection.title}
-          </p>
           <h2 className="text-4xl font-semibold tracking-tight md:text-6xl">
             {pageCms.positioningSection.subtitle}
           </h2>
@@ -120,7 +117,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="container mx-auto px-global py-20 md:py-28">
+      <section className="container mx-auto px-global pt-20 pb-12 md:pt-28 md:pb-16">
         <h2 className="max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
           {pageCms.whySection.title}
         </h2>
@@ -147,7 +144,7 @@ export default async function HomePage() {
 
       <SplitSection section={pageCms.tenantSection} muted />
 
-      <section className="container mx-auto px-global py-20 md:py-28">
+      <section className="container mx-auto px-global pt-16 pb-10 md:pt-24 md:pb-12">
         <div className="max-w-3xl">
           <h2 className="text-4xl font-semibold tracking-tight md:text-6xl">
             {pageCms.internationalSection.title}
@@ -172,32 +169,38 @@ export default async function HomePage() {
       </section>
 
       <section className="container mx-auto px-global py-20 md:py-28">
-        <div className="grid gap-10 md:grid-cols-[1fr_280px] md:items-end">
-          <div>
-            <h2 className="text-4xl font-semibold tracking-tight md:text-6xl">
-              {pageCms.aboutSection.title}
-            </h2>
-            <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-              {pageCms.aboutSection.content}
-            </p>
-            <p className="mt-6 text-lg font-medium">
-              {pageCms.aboutSection.directorText}
-            </p>
-            <Link
-              href={pageCms.aboutSection.linkedinHref}
-              className="mt-8 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.14em]"
-            >
-              {pageCms.aboutSection.linkedinText}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+        <div className="max-w-4xl">
+          <h2 className="text-4xl font-semibold tracking-tight md:text-6xl">
+            {pageCms.aboutSection.title}
+          </h2>
+          <p className="mt-8 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            {pageCms.aboutSection.content}
+          </p>
+          <p className="mt-6 text-lg font-medium">
+            {pageCms.aboutSection.directorText}
+          </p>
+          <div className="mt-3 space-y-1 text-base leading-relaxed text-muted-foreground">
+            <p>{pageCms.aboutSection.directorEducation}</p>
+            <p>{pageCms.aboutSection.directorCredential}</p>
           </div>
-          <div className="flex min-h-[146px] items-center justify-center p-6">
-            {pageCms.aboutSection.hgkLogoUrl && (
+        </div>
+      </section>
+
+      {pageCms.aboutSection.hgkLogoUrl && pageCms.aboutSection.hgkText && (
+        <section className="bg-[#f5f7f8] py-8 md:py-10">
+          <div className="container mx-auto px-global">
+            <div className="flex max-w-4xl flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="w-[78%] max-w-xl text-lg font-medium leading-relaxed text-foreground sm:w-auto md:text-xl">
+                  {pageCms.aboutSection.hgkText}
+                </p>
+              </div>
               <Link
                 href="https://www.hgk.hr/"
                 target="_blank"
                 rel="noopener"
                 aria-label={pageCms.aboutSection.hgkLogoAlt ?? "HGK"}
+                className="inline-flex w-fit shrink-0 transition-opacity hover:opacity-80"
               >
                 <Image
                   src={pageCms.aboutSection.hgkLogoUrl}
@@ -205,13 +208,13 @@ export default async function HomePage() {
                   width={360}
                   height={240}
                   unoptimized
-                  className="h-auto w-full max-w-[108px] opacity-80 transition-opacity hover:opacity-100 md:max-w-[132px]"
+                  className="h-auto w-[96px] md:w-[112px]"
                 />
               </Link>
-            )}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       <CTASection cmsData={ctaSectionCms} />
     </>

@@ -54,8 +54,9 @@ export interface MetHomePageCMS {
     title: string;
     content: string;
     directorText: string;
-    linkedinText: string;
-    linkedinHref: string;
+    directorEducation: string;
+    directorCredential: string;
+    hgkText?: string;
     hgkLogoUrl?: string;
     hgkLogoAlt?: string;
   };
@@ -129,8 +130,9 @@ const metHomePageQuery = groq`
       "title": aboutTitle[$lang],
       "content": aboutContent[$lang],
       "directorText": directorText[$lang],
-      "linkedinText": linkedinText[$lang],
-      "linkedinHref": linkedinHref,
+      "directorEducation": directorEducation[$lang],
+      "directorCredential": directorCredential[$lang],
+      "hgkText": hgkText[$lang],
       "hgkLogoUrl": select($lang == "en" => hgkLogoEn.asset->url, hgkLogoHr.asset->url),
       "hgkLogoAlt": hgkLogoAlt[$lang]
     },

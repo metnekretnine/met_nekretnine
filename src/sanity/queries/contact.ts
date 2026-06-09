@@ -27,6 +27,8 @@ export interface ContactPageCMS {
   instagramHref: string;
   linkedinLabel: string;
   linkedinHref: string;
+  facebookLabel?: string;
+  facebookHref?: string;
   infoLabel: string;
   infoValue: string;
   infoSubValue: string;
@@ -62,6 +64,8 @@ const contactQuery = groq`
     instagramHref,
     "linkedinLabel": linkedinLabel[$lang],
     linkedinHref,
+    "facebookLabel": facebookLabel[$lang],
+    facebookHref,
     "infoLabel": infoLabel[$lang],
     "infoValue": infoValue,
     "infoSubValue": infoSubValue,

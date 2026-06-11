@@ -10,7 +10,7 @@ import {
   UNDER_MAINTENANCE_LINK,
 } from "./lib/constants";
 
-function getLocaleFromRequest(request: NextRequest): string {
+function getLocaleFromRequest(request: NextRequest): Language["id"] {
   const locale = request.cookies.get(LOCALE_COOKIE_NAME)?.value;
 
   if (
@@ -19,18 +19,10 @@ function getLocaleFromRequest(request: NextRequest): string {
       locale as Language["id"],
     )
   ) {
-    return locale;
+    return locale as Language["id"];
   }
 
-  const country =
-    request.headers.get("x-vercel-ip-country") ||
-    request.headers.get("cf-ipcountry") ||
-    "";
-
-  if (country && country.toUpperCase() !== "HR") {
-    return "en";
-  }
-
+  // Keep canonical URLs stable for crawlers and anonymous visitors.
   return DEFAULT_LANGUAGE.id;
 }
 
@@ -60,6 +52,7 @@ export function middleware(request: NextRequest) {
           status: 503,
           headers: {
             [X_NEXT_LOCALE_HEADER]: locale,
+            "Content-Language": locale,
             "Retry-After": "21600", // Google crawler can retry after 6 hours
           },
         },
@@ -72,6 +65,7 @@ export function middleware(request: NextRequest) {
       headers: requestHeaders,
     },
   });
+  response.headers.set("Content-Language", locale);
 
   const cookieConsent = request.cookies.get(COOKIE_CONSENT_NAME);
 

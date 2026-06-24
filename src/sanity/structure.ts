@@ -36,6 +36,7 @@ const manuallyHandledSchemas = [
   "landlordsPage",
   "tenantsPage",
   "submitApartmentPage",
+  "submitApartmentInquiry",
   "agencyPage",
   "termsPage",
   "cookiePolicyPage",
@@ -139,6 +140,19 @@ export const structure: StructureResolver = (S) =>
                 ),
             ]),
         ),
+
+      S.listItem()
+        .title("Upiti za stan")
+        .id("submitApartmentInquiry")
+        .schemaType("submitApartmentInquiry")
+        .icon(EnvelopeIcon)
+        .child(
+          S.documentList()
+            .title("Upiti za stan")
+            .filter('_type == "submitApartmentInquiry"')
+            .defaultOrdering([{ field: "receivedAt", direction: "desc" }]),
+        ),
+      S.divider(),
 
       // Elementi za stanove
       S.listItem()

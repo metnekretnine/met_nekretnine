@@ -9,6 +9,7 @@ import { apartmentsRentPage } from "./apartmentsRentPage";
 import { landlordsPage } from "./landlordsPage";
 import { tenantsPage } from "./tenantsPage";
 import { submitApartmentPage } from "./submitApartmentPage";
+import { submitApartmentInquiry } from "./submitApartmentInquiry";
 import { agencyPage } from "./agencyPage";
 import { termsPage } from "./termsPage";
 import { cookiePolicyPage } from "./cookiePolicyPage";
@@ -53,6 +54,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     landlordsPage,
     tenantsPage,
     submitApartmentPage,
+    submitApartmentInquiry,
     agencyPage,
     termsPage,
     cookiePolicyPage,

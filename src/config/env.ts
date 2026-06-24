@@ -38,6 +38,9 @@ const env = cleanEnv(process.env, {
   SANITY_API_READ_TOKEN: str({
     desc: "Sanity API Read Token",
   }),
+  SANITY_API_WRITE_TOKEN: str({
+    desc: "Sanity API Write Token",
+  }),
   SANITY_WEBHOOK_SECRET: str({
     desc: "Sanity Webhook Secret",
   }),

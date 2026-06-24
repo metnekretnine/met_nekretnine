@@ -4,7 +4,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowRight, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { sendSubmitApartmentEmail } from "@/lib/actions";
+import {
+  createSubmitApartmentInquiry,
+  sendSubmitApartmentEmail,
+  uploadSubmitApartmentInquiryPhoto,
+} from "@/lib/actions";
 import { ZAGREB_DISTRICTS } from "@/lib/zagrebDistricts";
 import { SubmitApartmentPageCMS } from "@/sanity/queries";
 import { Input } from "@/shadcn/components/ui/input";
@@ -21,11 +25,21 @@ interface SelectedPhoto {
   previewUrl: string;
 }
 
+const PHOTO_UPLOAD_MAX_DIMENSION = 1800;
+const PHOTO_UPLOAD_MIN_DIMENSION = 1000;
+const PHOTO_UPLOAD_TARGET_BYTES = 1024 * 1024;
+const PHOTO_UPLOAD_INITIAL_QUALITY = 0.86;
+const PHOTO_UPLOAD_MIN_QUALITY = 0.62;
+const PHOTO_UPLOAD_CONTENT_TYPE = "image/webp";
+const IMAGE_FILE_EXTENSION_PATTERN =
+  /\.(avif|gif|heic|heif|jpeg|jpg|png|webp)$/i;
+
 export const SubmitApartmentForm = ({
   cmsData,
   className,
 }: SubmitApartmentFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitProgressText, setSubmitProgressText] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedPhotos, setSelectedPhotos] = useState<SelectedPhoto[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
@@ -69,9 +83,6 @@ export const SubmitApartmentForm = ({
     const form = event.currentTarget;
     const formData = new FormData(form);
     formData.delete("photos");
-    selectedPhotos.forEach((photo) => {
-      formData.append("photos", photo.file, photo.file.name);
-    });
 
     const payload = Object.fromEntries(
       Array.from(formData.entries()).filter(([key]) => key !== "photos"),
@@ -95,7 +106,36 @@ export const SubmitApartmentForm = ({
     setIsSubmitting(true);
 
     try {
-      const result = await sendSubmitApartmentEmail(formData);
+      const inquiryResult = await createSubmitApartmentInquiry(formData);
+
+      if (!("success" in inquiryResult) || !inquiryResult.success) {
+        toast.error(cmsData.errorMessage);
+        return;
+      }
+
+      const inquiryId = inquiryResult.inquiryId;
+
+      for (const [index, photo] of selectedPhotos.entries()) {
+        try {
+          setSubmitProgressText(
+            `Fotografije ${index + 1}/${selectedPhotos.length}...`,
+          );
+
+          const uploadResult = await uploadPhotoAsWebp(inquiryId, photo);
+
+          if (!("success" in uploadResult) || !uploadResult.success) {
+            console.error(
+              "Failed to upload submit apartment photo:",
+              uploadResult,
+            );
+          }
+        } catch (photoError) {
+          console.error("Failed to process submit apartment photo:", photoError);
+        }
+      }
+
+      setSubmitProgressText(cmsData.sendingButtonText);
+      const result = await sendSubmitApartmentEmail(inquiryId);
 
       if ("success" in result && result.success) {
         toast.success(cmsData.successMessage);
@@ -109,6 +149,7 @@ export const SubmitApartmentForm = ({
       toast.error(cmsData.errorMessage);
     } finally {
       setIsSubmitting(false);
+      setSubmitProgressText("");
     }
   };
 
@@ -123,8 +164,8 @@ export const SubmitApartmentForm = ({
   const handlePhotosChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const files = Array.from(event.currentTarget.files || []).filter((file) =>
-      file.type.startsWith("image/"),
+    const files = Array.from(event.currentTarget.files || []).filter(
+      isLikelyImageFile,
     );
 
     if (files.length === 0) {
@@ -322,7 +363,9 @@ export const SubmitApartmentForm = ({
         disabled={isSubmitting}
         className="mt-2 flex h-14 w-full items-center justify-center gap-3 rounded-full bg-foreground px-6 text-sm font-black uppercase tracking-[0.15em] text-white transition-colors hover:bg-foreground/90 disabled:opacity-50"
       >
-        {isSubmitting ? cmsData.sendingButtonText : cmsData.sendButtonText}
+        {isSubmitting
+          ? submitProgressText || cmsData.sendingButtonText
+          : cmsData.sendButtonText}
         <ArrowRight className="h-4 w-4" />
       </button>
     </form>
@@ -360,5 +403,156 @@ function Field({
       />
       {error && <p className="pl-6 text-xs text-red-400">{error}</p>}
     </div>
+  );
+}
+
+function isLikelyImageFile(file: File) {
+  return (
+    file.type.startsWith("image/") ||
+    IMAGE_FILE_EXTENSION_PATTERN.test(file.name)
+  );
+}
+
+function getWebpPhotoFilename(filename: string) {
+  const normalizedName = filename.replace(/\.[^.]+$/, "").trim();
+
+  return `${normalizedName || "fotografija"}.webp`;
+}
+
+function loadImage(file: File) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const imageUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(imageUrl);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(imageUrl);
+      reject(new Error("Image could not be loaded for compression."));
+    };
+    image.src = imageUrl;
+  });
+}
+
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality: number,
+) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+
+        reject(new Error("Image could not be compressed."));
+      },
+      type,
+      quality,
+    );
+  });
+}
+
+async function renderCompressedBlob(
+  image: HTMLImageElement,
+  maxDimension: number,
+  quality: number,
+) {
+  const sourceWidth = image.naturalWidth || image.width;
+  const sourceHeight = image.naturalHeight || image.height;
+  const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight));
+  const width = Math.max(1, Math.round(sourceWidth * scale));
+  const height = Math.max(1, Math.round(sourceHeight * scale));
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+
+  if (!context) {
+    throw new Error("Canvas context is not available.");
+  }
+
+  canvas.width = width;
+  canvas.height = height;
+  context.drawImage(image, 0, 0, width, height);
+
+  return canvasToBlob(canvas, PHOTO_UPLOAD_CONTENT_TYPE, quality);
+}
+
+async function convertPhotoToWebp(file: File) {
+  const image = await loadImage(file);
+  let maxDimension = PHOTO_UPLOAD_MAX_DIMENSION;
+  let quality = PHOTO_UPLOAD_INITIAL_QUALITY;
+  let blob = await renderCompressedBlob(image, maxDimension, quality);
+
+  while (
+    blob.size > PHOTO_UPLOAD_TARGET_BYTES &&
+    quality > PHOTO_UPLOAD_MIN_QUALITY
+  ) {
+    quality = Math.max(PHOTO_UPLOAD_MIN_QUALITY, quality - 0.08);
+    blob = await renderCompressedBlob(image, maxDimension, quality);
+  }
+
+  while (
+    blob.size > PHOTO_UPLOAD_TARGET_BYTES &&
+    maxDimension > PHOTO_UPLOAD_MIN_DIMENSION
+  ) {
+    maxDimension = Math.max(
+      PHOTO_UPLOAD_MIN_DIMENSION,
+      Math.round(maxDimension * 0.84),
+    );
+    quality = PHOTO_UPLOAD_INITIAL_QUALITY;
+    blob = await renderCompressedBlob(image, maxDimension, quality);
+
+    while (
+      blob.size > PHOTO_UPLOAD_TARGET_BYTES &&
+      quality > PHOTO_UPLOAD_MIN_QUALITY
+    ) {
+      quality = Math.max(PHOTO_UPLOAD_MIN_QUALITY, quality - 0.08);
+      blob = await renderCompressedBlob(image, maxDimension, quality);
+    }
+  }
+
+  return new File([blob], getWebpPhotoFilename(file.name), {
+    type: PHOTO_UPLOAD_CONTENT_TYPE,
+    lastModified: file.lastModified,
+  });
+}
+
+function createPhotoFormData({
+  originalFile,
+  uploadFile,
+  processingMode,
+}: {
+  originalFile: File;
+  uploadFile: File;
+  processingMode: "WebP";
+}) {
+  const formData = new FormData();
+
+  formData.append("photo", uploadFile, uploadFile.name);
+  formData.append("originalFilename", originalFile.name);
+  formData.append("originalSizeBytes", String(originalFile.size));
+  formData.append("storedSizeBytes", String(uploadFile.size));
+  formData.append("processingMode", processingMode);
+
+  return formData;
+}
+
+async function uploadPhotoAsWebp(
+  inquiryId: string,
+  photo: SelectedPhoto,
+) {
+  const webpPhoto = await convertPhotoToWebp(photo.file);
+
+  return uploadSubmitApartmentInquiryPhoto(
+    inquiryId,
+    createPhotoFormData({
+      originalFile: photo.file,
+      uploadFile: webpPhoto,
+      processingMode: "WebP",
+    }),
   );
 }

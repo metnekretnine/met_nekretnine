@@ -6,6 +6,7 @@ import {
   Head,
   Hr,
   Html,
+  Link,
   Preview,
   Row,
   Section,
@@ -24,6 +25,7 @@ interface EmailTemplateSubmitApartmentProps {
   rentPrice: string;
   description: string;
   attachmentCount: number;
+  inquiryUrl?: string;
 }
 
 const DetailRow = ({
@@ -57,6 +59,7 @@ export const EmailTemplateSubmitApartment: React.FC<
   rentPrice,
   description,
   attachmentCount,
+  inquiryUrl,
 }) => (
   <Html>
     <Head />
@@ -82,8 +85,23 @@ export const EmailTemplateSubmitApartment: React.FC<
             <DetailRow label="Okvirna cijena najma" value={rentPrice} />
             <DetailRow
               label="Fotografije"
-              value={`${attachmentCount} priloženih datoteka`}
+              value={`${attachmentCount} spremljenih fotografija`}
             />
+            {inquiryUrl && (
+              <Row className="mb-4">
+                <Column>
+                  <Text className="m-0 text-xs font-bold uppercase tracking-widest text-gray-500">
+                    Sanity zapis
+                  </Text>
+                  <Link
+                    href={inquiryUrl}
+                    className="mt-1 block text-base font-semibold text-[#101114] underline"
+                  >
+                    Otvori upit u adminu
+                  </Link>
+                </Column>
+              </Row>
+            )}
             <Hr className="my-6 border-gray-200" />
             <Text className="mb-2 text-xs font-bold uppercase tracking-widest text-gray-500">
               Kratak opis

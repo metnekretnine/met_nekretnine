@@ -4,7 +4,7 @@ import "./src/config/env"; // Import env to ensure early validation during build
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      bodySizeLimit: "30mb",
+      bodySizeLimit: "5mb",
     },
   },
   images: {

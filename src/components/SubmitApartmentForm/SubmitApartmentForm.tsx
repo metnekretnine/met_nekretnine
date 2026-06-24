@@ -118,7 +118,7 @@ export const SubmitApartmentForm = ({
       for (const [index, photo] of selectedPhotos.entries()) {
         try {
           setSubmitProgressText(
-            `Fotografije ${index + 1}/${selectedPhotos.length}...`,
+            `Upload ${index + 1}/${selectedPhotos.length}...`,
           );
 
           const uploadResult = await uploadPhotoAsWebp(inquiryId, photo);

@@ -121,7 +121,7 @@ export const Footer: React.FC<Props> = ({ cmsData }) => {
         </div>
         <div className="mt-14 border-t border-white/10 pt-8">
           <p className="text-sm text-background/50">
-            © {new Date().getFullYear()} {cmsData.companyName}.{" "}
+            © {new Date().getFullYear()} {cmsData.companyName}{" "}
             {cmsData.copyright}
           </p>
         </div>

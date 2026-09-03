@@ -6,6 +6,7 @@ import { structureTool } from "sanity/structure";
 import { presentationTool } from "sanity/presentation";
 import { media } from "sanity-plugin-media";
 import { googleMapsInput } from "@sanity/google-maps-input";
+import { table } from "@sanity/table";
 
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
 import { schema } from "./src/sanity/schemaTypes";
@@ -17,6 +18,7 @@ export default defineConfig({
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
   schema,
   plugins: [
+    table(),
     structureTool({ structure }),
         presentationTool({
       previewUrl: {

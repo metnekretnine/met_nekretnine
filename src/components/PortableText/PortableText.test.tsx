@@ -216,6 +216,33 @@ describe('PortableText', () => {
     expect(screen.getByRole('listitem')).toHaveTextContent('First Item');
   });
 
+  it('renders a table with the first row as column headers', () => {
+    const value: ArbitraryTypedObject[] = [
+      {
+        _key: 'tableKey',
+        _type: 'table',
+        rows: [
+          {
+            _key: 'headerRow',
+            _type: 'tableRow',
+            cells: ['Service', 'Fee'],
+          },
+          {
+            _key: 'bodyRow',
+            _type: 'tableRow',
+            cells: ['Open brokerage', '100%'],
+          },
+        ],
+      },
+    ];
+
+    render(<PortableText value={value} />);
+
+    expect(screen.getByRole('table')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'Service' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'Open brokerage' })).toBeInTheDocument();
+  });
+
   it('renders an image with correct alt text, src and caption', () => {
     const value: ArbitraryTypedObject[] = [
       {
@@ -229,7 +256,7 @@ describe('PortableText', () => {
         },
       },
     ];
-    render(<PortableText value={value as PortableTextBlock[]} />);
+    render(<PortableText value={value} />);
     const image = screen.getByRole('img', { name: 'A mock image' });
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', 'https://example.com/mock-image.jpg');

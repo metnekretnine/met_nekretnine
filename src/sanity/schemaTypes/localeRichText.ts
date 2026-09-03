@@ -15,6 +15,9 @@ export const localeRichText = defineType({
           type: 'block',
         },
         {
+          type: 'table',
+        },
+        {
           type: 'image',
           fields: [
             {

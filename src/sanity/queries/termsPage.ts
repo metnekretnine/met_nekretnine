@@ -1,6 +1,6 @@
 import { groq } from "next-sanity";
 import { notFound } from "next/navigation";
-import { PortableTextBlock } from "@portabletext/types";
+import { ArbitraryTypedObject, PortableTextBlock } from "@portabletext/types";
 import { SanityImageSource } from "@sanity/image-url/lib/types/types";
 import { Language } from "@/lib/constants";
 import { sanityFetch } from "../lib/live";
@@ -10,7 +10,7 @@ export interface TermsPageCMS {
   heroDescriptionText?: string;
   heroBackgroundImage: SanityImageSource;
   heroBackgroundImageAlt: string;
-  content: PortableTextBlock[];
+  content: Array<PortableTextBlock | ArbitraryTypedObject>;
   metaTitle: string;
   metaDescription: string;
   metaOgImage?: SanityImageSource;

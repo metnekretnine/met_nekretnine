@@ -10,9 +10,16 @@ import React from "react";
 import { PortableTextBlock, ArbitraryTypedObject } from "@portabletext/types";
 
 interface PortableTextProps {
-  value: PortableTextBlock[];
+  value: Array<PortableTextBlock | ArbitraryTypedObject>;
   isBackgroundDark?: boolean;
   textSize?: string;
+}
+
+interface TableValue extends ArbitraryTypedObject {
+  rows?: Array<{
+    _key?: string;
+    cells?: string[];
+  }>;
 }
 
 export const PortableText = ({
@@ -25,6 +32,42 @@ export const PortableText = ({
 
   const components: PortableTextComponents = {
     types: {
+      table: ({ value }: PortableTextComponentProps<TableValue>) => {
+        const rows = value.rows?.filter((row) => row.cells?.length) ?? [];
+        if (!rows.length) return null;
+
+        return (
+          <div className="not-prose my-8 overflow-x-auto rounded-lg border border-border">
+            <table className="w-full min-w-[680px] border-collapse text-left text-sm md:text-base">
+              <tbody>
+                {rows.map((row, rowIndex) => {
+                  const Cell = rowIndex === 0 ? "th" : "td";
+
+                  return (
+                    <tr key={row._key ?? rowIndex}>
+                      {row.cells?.map((cell, cellIndex) => (
+                        <Cell
+                          key={`${row._key ?? rowIndex}-${cellIndex}`}
+                          scope={Cell === "th" ? "col" : undefined}
+                          className={cn(
+                            "border-b border-r border-border px-4 py-3 align-top last:border-r-0",
+                            rowIndex === rows.length - 1 && "border-b-0",
+                            Cell === "th"
+                              ? `font-semibold ${headingColor} bg-muted/50`
+                              : textColor,
+                          )}
+                        >
+                          {cell}
+                        </Cell>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      },
       image: ({ value }: PortableTextComponentProps<ArbitraryTypedObject>) => {
         if (!value?.asset?._ref) return null;
 

@@ -17,11 +17,14 @@ export function EPotpisSigner({ cmsData: c, token }: Props) {
   const [loading, setLoading] = useState(true);
   const [invalid, setInvalid] = useState(false);
   const [signatures, setSignatures] = useState<(Signature | null)[]>([]);
-  const [draft, setDraft] = useState<Signature | null>(null);
+  const [drafts, setDrafts] = useState<(Signature | null)[]>([]);
   const [editing, setEditing] = useState<number | null>(0);
+  const draft = editing === null ? null : drafts[editing];
   const focusCapture = useRef(false);
   const captureHeading = useRef<HTMLHeadingElement>(null);
   const reviewHeading = useRef<HTMLParagraphElement>(null);
+  const resultHeading = useRef<HTMLHeadingElement>(null);
+  const revealResult = useRef(false);
   const [consent, setConsent] = useState(false);
   const [consumerConsent, setConsumerConsent] = useState(false);
   const [ready, setReady] = useState(false);
@@ -29,30 +32,48 @@ export function EPotpisSigner({ cmsData: c, token }: Props) {
   const [error, setError] = useState("");
   const path = `/api/ugovori/sign/${encodeURIComponent(token)}`;
   useEffect(() => { void api<PublicContract>(path).then(data => {
-    setContract(data); setSignatures((data.signers || [data.ownerName]).map(() => null)); setDraft(null); setEditing(0);
+    const empty = (data.signers || [data.ownerName]).map(() => null);
+    setContract(data); setSignatures(empty); setDrafts(empty); setEditing(0);
   }).catch(() => setInvalid(true)).finally(() => setLoading(false)); }, [path]);
   useEffect(() => {
     if (!focusCapture.current) return;
     (editing === null ? reviewHeading.current : captureHeading.current)?.focus(); focusCapture.current = false;
   }, [editing]);
+  useEffect(() => {
+    if (!revealResult.current || contract?.status !== "signed") return;
+    revealResult.current = false;
+    resultHeading.current?.focus({ preventScroll: true });
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [contract?.status]);
   const names = contract?.signers || (contract ? [contract.ownerName] : []);
   const signatureTitle = (name: string) => c.signatureFor.replace("{name}", name);
   const complete = signatures.length === names.length && signatures.length > 0 && signatures.every(signatureHasInk);
+  function focusNextSignature(saved: (Signature | null)[], working: (Signature | null)[]) {
+    // Resume any unfinished signer or replacement without discarding their ink.
+    const next = saved.findIndex((item, index) => !item || item !== working[index]);
+    setError(""); focusCapture.current = true; setEditing(next === -1 ? null : next);
+  }
   function acceptSignature() {
     if (editing === null || !signatureHasInk(draft)) { setError(c.signatureRequired); return; }
     const saved = signatures.map((item, index) => index === editing ? draft : item);
-    setSignatures(saved); setDraft(null); setError(""); focusCapture.current = true;
-    const next = saved.findIndex(item => !item); setEditing(next === -1 ? null : next);
+    setSignatures(saved); focusNextSignature(saved, drafts);
   }
   function editSignature(index: number) {
-    setDraft(signatures[index]); setEditing(index); setError(""); focusCapture.current = true;
+    setEditing(index); setError(""); focusCapture.current = true;
+  }
+  function cancelSignature() {
+    const restored = drafts.map((item, index) => index === editing ? signatures[index] : item);
+    setDrafts(restored); focusNextSignature(signatures, restored);
   }
   async function sign() {
     if (!complete || editing !== null) { setError(c.signatureRequired); return; }
     if (!consent || (contract?.consumer && !consumerConsent)) { setError(c.consentRequired); return; }
     if (!ready) { setError(c.reviewRequired); return; }
     setBusy(true); setError("");
-    try { setContract(await api<PublicContract>(path, { signatures, consent, consumerConsent, documentHash: contract?.documentHash })); }
+    try {
+      const result = await api<PublicContract>(path, { signatures, consent, consumerConsent, documentHash: contract?.documentHash });
+      revealResult.current = result.status === "signed"; setContract(result);
+    }
     catch (e) { const key = e instanceof Error ? e.message : "error"; setError(c[key as keyof typeof c] || c.error); }
     finally { setBusy(false); }
   }
@@ -62,7 +83,7 @@ export function EPotpisSigner({ cmsData: c, token }: Props) {
       {loading ? <EPotpisLoader label={c.loading} /> : invalid ? <div className="ep-panel ep-success"><h1>{c.invalidTitle}</h1><p>{c.invalidDescription}</p></div> : contract && <>
         <div className="ep-sign-intro"><span className={`ep-round-icon ${signed ? "is-signed" : ""}`}>{signed ? <Check /> : <PenLine />}</span>
           <p className="ep-eyebrow">{contract.number} · {contract.kind === "open" ? c.open : c.exclusive}</p>
-          <h1>{signed ? c.signedTitle : c.signTitle}</h1><p>{signed ? c.signedDescription : c.signDescription}</p>
+          <h1 ref={resultHeading} tabIndex={-1}>{signed ? c.signedTitle : c.signTitle}</h1><p>{signed ? c.signedDescription : c.signDescription}</p>
         </div>
         <div className="ep-contract-summary"><strong>{contract.ownerName}</strong><span>{contract.propertyAddress}</span></div>
         {signed && <div className="ep-panel ep-success"><p>{c.signedAt}: {new Date(contract.signedAt!).toLocaleString("hr-HR", { timeZone: "Europe/Zagreb" })}</p>
@@ -74,15 +95,15 @@ export function EPotpisSigner({ cmsData: c, token }: Props) {
             {names.map((name, index) => <div key={index} className={`ep-signer-card ${editing === index ? "is-active" : ""}`}>
               <strong>{name}</strong><span className="ep-signature-status">{signatures[index] ? <><Check size={14} />{c.signatureReady}</> : c.signaturePending}</span>
               {signatures[index] && <><EPotpisSignaturePreview signature={signatures[index]!} label={signatureTitle(name)} />
-                <button type="button" className="ep-text-button" disabled={busy || editing !== null} onClick={() => editSignature(index)}>{c.editSignature}</button></>}
+                <button type="button" className="ep-text-button" disabled={busy || editing === index} onClick={() => editSignature(index)}>{c.editSignature}</button></>}
             </div>)}
           </div>}
           {editing !== null && <div className="ep-signature-capture">
             <p className="ep-eyebrow">{c.signatureStep.replace("{current}", String(editing + 1)).replace("{total}", String(names.length))}</p>
             <h3 ref={captureHeading} tabIndex={-1}>{signatureTitle(names[editing])}</h3>
-            <EPotpisSignature key={editing} cmsData={c} initialValue={signatures[editing]} label={signatureTitle(names[editing])}
-              disabled={busy || !ready} onChange={value => { setDraft(value); setError(""); }} onConfirm={acceptSignature} confirmDisabled={!signatureHasInk(draft)} />
-            {signatures[editing] && <button type="button" className="ep-text-button" disabled={busy} onClick={() => { setDraft(null); focusCapture.current = true; setEditing(null); }}>{c.cancel}</button>}
+            <EPotpisSignature key={editing} cmsData={c} initialValue={draft} label={signatureTitle(names[editing])}
+              disabled={busy || !ready} onChange={value => { setDrafts(items => items.map((item, index) => index === editing ? value : item)); setError(""); }} onConfirm={acceptSignature} confirmDisabled={!signatureHasInk(draft)} />
+            {signatures[editing] && <button type="button" className="ep-text-button" disabled={busy} onClick={cancelSignature}>{c.cancel}</button>}
           </div>}
           {complete && editing === null && <p className="ep-signature-review" ref={reviewHeading} tabIndex={-1}>{c.signatureReview}</p>}
           <label className="ep-check"><input type="checkbox" disabled={busy} checked={consent} onChange={e => setConsent(e.target.checked)} />{c.consent}</label>

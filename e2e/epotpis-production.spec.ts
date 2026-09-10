@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { createHmac } from "node:crypto";
+import { createContractPdf } from "../src/lib/epotpis/pdf";
+import { loadEPotpisTemplate } from "../src/lib/epotpis/templates";
+import { testContractInput } from "../src/lib/epotpis/test-data";
 
 test("production rejects legacy cookies and demo password without Clerk configuration", async ({ page, context, request }) => {
   const expires = String(Date.now() + 3600000);
@@ -14,16 +17,35 @@ test("production rejects legacy cookies and demo password without Clerk configur
   expect((await request.post("/api/ugovori/session", { data: { password: "met-demo-2026" }, headers: { Origin: "http://localhost:3003" } })).status()).toBe(401);
 });
 
-test("production signing captures two individual signatures in one confirmation", async ({ page }) => {
-  const { readFileSync } = await import("node:fs");
-  const pdf = readFileSync("resources/epotpis/templates/MET_OTVORENO_POSREDOVANJE_UGOVOR_I_OPCI_UVJETI_PREDLOZAK_08-09-2026.pdf");
+test("production signing captures two individual signatures in one confirmation", async ({ page }, testInfo) => {
+  // Exercise the real renderer and worker without native APIs absent in Safari 18.
+  await page.addInitScript(() => {
+    Reflect.deleteProperty(Math, "sumPrecise");
+    Reflect.deleteProperty(Map.prototype, "getOrInsertComputed");
+  });
+  let workerRequests = 0;
+  await page.route("**/epotpis/pdf.worker.min.mjs*", async route => {
+    workerRequests++;
+    const response = await route.fetch();
+    await route.fulfill({ response, body: `Reflect.deleteProperty(Math, "sumPrecise"); Reflect.deleteProperty(Map.prototype, "getOrInsertComputed");\n${await response.text()}` });
+  });
   const token = "a".repeat(64);
   const contract = { number: "TEST-001/2026", ownerName: "Marko Horvat i Ana Horvat", signers: ["Marko Horvat", "Ana Horvat"], propertyAddress: "Testna ulica 20", kind: "open", consumer: false, status: "sent", documentHash: "test-hash", signedAt: null as string | null };
+  // Use a populated contract, including the embedded font used in real documents.
+  const { bytes } = await createContractPdf({ ...testContractInput(true), consumer: false }, contract.number, await loadEPotpisTemplate("open"), { kind: "strokes", paths: [[[80, 150], [150, 80], [220, 140]]] });
+  const pdf = Buffer.from(bytes);
   const writes: Record<string, unknown>[] = [];
   const unexpected: string[] = [];
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  let releasePdf!: () => void;
+  const pdfReady = new Promise<void>(resolve => { releasePdf = resolve; });
   await page.route("**/api/ugovori/**", async route => {
     const path = new URL(route.request().url()).pathname;
-    if (route.request().method() === "GET" && path === `/api/ugovori/sign/${token}/pdf`) await route.fulfill({ contentType: "application/pdf", body: pdf });
+    if (route.request().method() === "GET" && path === `/api/ugovori/sign/${token}/pdf`) {
+      await pdfReady;
+      await route.fulfill({ contentType: "application/pdf", body: pdf });
+    }
     else if (path === `/api/ugovori/sign/${token}` && ["GET", "POST"].includes(route.request().method())) {
       if (route.request().method() === "POST") {
         writes.push(route.request().postDataJSON()); contract.status = "signed"; contract.signedAt = "2026-09-10T12:00:00Z";
@@ -32,25 +54,82 @@ test("production signing captures two individual signatures in one confirmation"
     } else { unexpected.push(path); await route.abort(); }
   });
   await page.goto(`/ugovori/potpis/${token}`);
-  for (const name of contract.signers) {
-    const canvas = page.locator(".ep-signature-box canvas");
-    await expect(canvas).toHaveAttribute("aria-disabled", "false");
-    await expect(canvas).toHaveAttribute("aria-label", `Potpis - ${name}`);
+  const canvas = page.locator(".ep-signature-box canvas");
+  const accept = page.getByRole("button", { name: "Prihvati potpis", exact: true });
+  const sign = page.getByRole("button", { name: "POTPIŠI", exact: true });
+  // Expanding is a layout action; signing must still wait for the document.
+  await page.getByRole("button", { name: "Proširi prostor za potpis", exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(canvas).toHaveAttribute("aria-disabled", "true");
+  await expect(accept).toBeDisabled();
+  await page.getByRole("button", { name: "Natrag na ugovor", exact: true }).click();
+  releasePdf();
+  await expect(canvas).toHaveAttribute("aria-disabled", "false");
+  await expect(page.locator(".ep-pdf-pages canvas")).toHaveCount(2);
+  await page.getByRole("button", { name: "Proširi prostor za potpis", exact: true }).click();
+  await expect(canvas).toHaveAttribute("aria-disabled", "false");
+  await page.screenshot({ path: testInfo.outputPath("expanded-signature.png") });
+  await page.getByRole("button", { name: "Natrag na ugovor", exact: true }).click();
+  // Re-rendering at maximum zoom also exercises the mobile canvas budget.
+  for (let zoom = 150; zoom <= 250; zoom += 50) {
+    await page.locator(".ep-pdf-toolbar button").last().click();
+    await expect(page.locator(".ep-pdf-toolbar")).toContainText(`${zoom}%`);
+    await expect(page.locator(".ep-pdf-pages")).toHaveAttribute("aria-busy", "false");
+  }
+  const pixels = await page.locator(".ep-pdf-pages canvas").evaluateAll(nodes => nodes.map(node => {
+    const canvas = node as HTMLCanvasElement;
+    return canvas.width * canvas.height;
+  }));
+  expect(pixels).toHaveLength(2);
+  expect(pixels.every(count => count > 0 && count <= 4_000_000)).toBe(true);
+  async function draw(reverse = false) {
     await canvas.scrollIntoViewIfNeeded();
     const box = (await canvas.boundingBox())!;
     await page.mouse.move(box.x + box.width * .1, box.y + box.height * .7); await page.mouse.down();
-    for (const [x, y] of [[.2,.3],[.3,.6],[.4,.3],[.5,.7],[.7,.3]]) await page.mouse.move(box.x + box.width * x, box.y + box.height * y, { steps: 4 });
+    for (const [x, y] of [[.2,.3],[.3,.6],[.4,.3],[.5,.7],[.7,.3]]) await page.mouse.move(box.x + box.width * x, box.y + box.height * (reverse ? 1 - y : y), { steps: 4 });
     await page.mouse.up();
-    await page.getByRole("button", { name: "Prihvati potpis", exact: true }).click();
   }
+  await expect(canvas).toHaveAttribute("aria-label", `Potpis - ${contract.signers[0]}`);
+  await draw(); await accept.click();
+  const cards = page.locator(".ep-signer-card");
+  const originalFirst = await cards.nth(0).locator("svg.ep-signature-ink").innerHTML();
+  await expect(canvas).toHaveAttribute("aria-label", `Potpis - ${contract.signers[1]}`);
+  await draw(true);
+  const pendingSecond = await canvas.evaluate((node: HTMLCanvasElement) => node.toDataURL());
+  // Replacing/cancelling the first signature must work before accepting the second.
+  const replaceFirst = cards.nth(0).getByRole("button", { name: "Zamijeni potpis", exact: true });
+  await replaceFirst.click();
+  await page.getByRole("button", { name: "Obriši potpis", exact: true }).click();
+  await page.locator(".ep-signature-capture > button").click();
+  expect(await cards.nth(0).locator("svg.ep-signature-ink").innerHTML()).toBe(originalFirst);
+  await expect(canvas).toHaveAttribute("aria-label", `Potpis - ${contract.signers[1]}`);
+  expect(await canvas.evaluate((node: HTMLCanvasElement) => node.toDataURL())).toBe(pendingSecond);
+  await replaceFirst.click();
+  await page.getByRole("button", { name: "Obriši potpis", exact: true }).click();
+  await draw(true); await accept.click();
+  expect(await cards.nth(0).locator("svg.ep-signature-ink").innerHTML()).not.toBe(originalFirst);
+  await expect(canvas).toHaveAttribute("aria-label", `Potpis - ${contract.signers[1]}`);
+  expect(await canvas.evaluate((node: HTMLCanvasElement) => node.toDataURL())).toBe(pendingSecond);
+  await expect(sign).toBeDisabled();
+  await accept.click();
   expect(writes).toHaveLength(0);
   await expect(page.locator(".ep-signature-ink")).toHaveCount(2);
   await page.getByRole("checkbox").check();
-  await page.getByRole("button", { name: "POTPIŠI", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Ugovor je potpisan." })).toBeVisible();
+  await sign.scrollIntoViewIfNeeded();
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  await sign.click();
+  const heading = page.getByRole("heading", { name: "Ugovor je potpisan." });
+  await expect(heading).toBeFocused();
+  await expect(heading).toBeInViewport();
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(page.locator(".ep-pdf-pages")).toHaveAttribute("aria-busy", "false");
+  await expect(page.locator(".ep-pdf [role=alert]")).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath("signed-result.png") });
   expect(writes).toHaveLength(1);
   expect(writes[0].signatures).toHaveLength(2);
   expect(unexpected).toEqual([]);
+  expect(errors).toEqual([]);
+  expect(workerRequests).toBeGreaterThan(0);
 });
 
 test("the property website and its redirects remain public and indexable", async ({ request, page }) => {

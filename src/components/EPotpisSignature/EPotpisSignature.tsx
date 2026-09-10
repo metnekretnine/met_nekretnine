@@ -67,7 +67,7 @@ export function EPotpisSignature({ cmsData: c, onChange, initialValue, label, di
     {onConfirm && <button type="button" className="ep-button" disabled={disabled || confirmDisabled} onClick={onConfirm}>{c.confirmSignature}</button>}
   </div>;
   return <div className="ep-signature">
-    {!expanded && <>{rotateHint}<div className="ep-signature-toolbar"><button ref={expandButton} type="button" className="ep-text-button" disabled={disabled} onClick={() => setExpanded(true)}><Expand size={16} />{c.signatureExpand}</button></div>{pad}{actions}</>}
+    {!expanded && <>{rotateHint}<div className="ep-signature-toolbar"><button ref={expandButton} type="button" className="ep-text-button" onClick={() => setExpanded(true)}><Expand size={16} />{c.signatureExpand}</button></div>{pad}{actions}</>}
     <Dialog.Root open={expanded} onOpenChange={setExpanded}><Dialog.Portal>
       <Dialog.Overlay className="ep-modal-overlay" />
       <Dialog.Content className="ep-root ep-draw-dialog" onPointerDownOutside={event => event.preventDefault()}

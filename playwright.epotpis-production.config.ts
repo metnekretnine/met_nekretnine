@@ -5,6 +5,10 @@ export default defineConfig({
   ...base, testMatch: "epotpis-production.spec.ts",
   outputDir: ".data/epotpis-production-results",
   use: { ...base.use, baseURL: "http://localhost:3003" },
+  projects: [
+    { name: "chromium" },
+    { name: "mobile-webkit", use: { browserName: "webkit", viewport: { width: 393, height: 852 }, isMobile: true, hasTouch: true, deviceScaleFactor: 3, launchOptions: { args: [] } } },
+  ],
   webServer: {
     command: "pnpm exec next start --hostname 127.0.0.1 --port 3003", url: "http://localhost:3003/ugovori", reuseExistingServer: false, timeout: 120000,
     env: {

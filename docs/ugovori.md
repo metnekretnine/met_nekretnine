@@ -40,7 +40,7 @@ Konačni pošiljatelj na metnekretnine.hr ovisi o dovršenoj Resend DNS verifika
 
 Koristi se postojeći `LogoCompany`, Geist i globalni MET tokeni boja. Funkcionalni raspored potpisa ostaje u CSS-u s prefiksom `ep-` u `src/app/ugovori/ugovori.css`; ne dodaje globalne stilove koji mijenjaju stranice stanova. Gumbi prate zaobljeni oblik postojećeg dizajna.
 
-UI i email tekstovi su u `src/lib/epotpis/texts.ts`. PDF-ovi i raspored polja u `resources/epotpis/templates/`, fontovi u `resources/epotpis/fonts/`. `scripts/epotpis-extract-templates.py` priprema promijenjene predloške, `epotpis-verify-pdfs.py` provjerava generirane rezultate. PDF.js worker kopira se tijekom postinstall koraka i verzija odgovara instaliranoj biblioteci.
+UI i email tekstovi su u `src/lib/epotpis/texts.ts`. PDF-ovi i raspored polja u `resources/epotpis/templates/`, fontovi u `resources/epotpis/fonts/`. `scripts/epotpis-extract-templates.py` priprema promijenjene predloške, `epotpis-verify-pdfs.py` provjerava generirane rezultate. PDF.js preglednik i worker koriste `legacy` build iste instalirane verzije radi podrške starijem Safariju. Worker se kopira tijekom postinstall koraka; URL uključuje verziju radi osvježavanja predmemorije. Nakon promjene workera lokalno pokrenuti `pnpm run postinstall`.
 
 Studio dodaje samo `ePotpisRecord` i rubriku Spremljeni ugovori. Oglasima, Media, Maps, Table i Presentation pluginima ništa nije uklonjeno. Ugovori i PDF-ovi su privatni zapisi, ne javni file assets. Preuzimanje u Studiju koristi spremljeni PDF, bez ovisnosti o ugovori frontendu.
 
@@ -52,7 +52,7 @@ Next config zadržava postojeća preusmjeravanja, slike i serverActions postavke
 
 ```sh
 pnpm install
-pnpm exec playwright install chromium
+pnpm exec playwright install chromium webkit
 pnpm exec tsc --noEmit -p tsconfig.build.json
 pnpm exec jest src/lib/epotpis src/components/EPotpisSessionSync src/sanity/components --runInBand
 pnpm ugovori:test

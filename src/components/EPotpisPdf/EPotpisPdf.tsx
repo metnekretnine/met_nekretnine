@@ -16,8 +16,10 @@ export function EPotpisPdf({ cmsData: c, url, onReady }: Props) {
     let destroy: (() => void) | undefined;
     setLoading(true); setError(false);
     async function render() {
-      const pdfjs = await import("pdfjs-dist");
-      pdfjs.GlobalWorkerOptions.workerSrc = "/epotpis/pdf.worker.min.mjs";
+      // Keep the renderer and worker on PDF.js's matching compatibility builds.
+      const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+      if (disposed) return;
+      pdfjs.GlobalWorkerOptions.workerSrc = `/epotpis/pdf.worker.min.mjs?v=${pdfjs.version}-legacy`;
       const task = pdfjs.getDocument({ url });
       destroy = () => { void task.destroy(); };
       const document = await task.promise;
@@ -26,21 +28,30 @@ export function EPotpisPdf({ cmsData: c, url, onReady }: Props) {
       for (let index = 1; index <= document.numPages; index++) {
         if (disposed) break;
         const page = await document.getPage(index);
+        if (disposed) return;
         const canvas = window.document.createElement("canvas");
         const base = page.getViewport({ scale: 1 });
-        const ratio = Math.min(window.devicePixelRatio || 1, 2);
         const width = Math.min(container.current.clientWidth, 900) * zoom;
+        // Bound backing-store memory when zooming on high-density mobile screens.
+        const ratio = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(4_000_000 / (width * width * base.height / base.width)));
         const viewport = page.getViewport({ scale: width / base.width * ratio });
         canvas.width = viewport.width; canvas.height = viewport.height;
         canvas.style.width = `${width}px`; canvas.style.height = `${viewport.height / ratio}px`;
         canvas.setAttribute("aria-label", `${c.page} ${index}`);
         container.current.appendChild(canvas);
         await page.render({ canvas, canvasContext: canvas.getContext("2d")!, viewport }).promise;
+        page.cleanup();
       }
       if (!disposed) { setLoading(false); ready.current?.(); }
     }
     void render().catch(() => { if (!disposed) { setLoading(false); setError(true); } });
-    return () => { disposed = true; destroy?.(); };
+    const pages = container.current;
+    return () => {
+      disposed = true; destroy?.();
+      // Safari retains detached canvas backing stores unless explicitly released.
+      pages?.querySelectorAll("canvas").forEach(canvas => { canvas.width = 0; canvas.height = 0; });
+      pages?.replaceChildren();
+    };
   }, [url, zoom, c.page]);
   return <div className="ep-pdf">
     <div className="ep-pdf-toolbar"><span>{c.reviewTitle}</span><div>

@@ -17,6 +17,10 @@ export default defineConfig({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
   schema,
+  document: {
+    newDocumentOptions: options => options.filter(option => option.templateId !== "ePotpisRecord"),
+    actions: (actions, context) => context.schemaType === "ePotpisRecord" ? [] : actions,
+  },
   plugins: [
     table(),
     structureTool({ structure }),

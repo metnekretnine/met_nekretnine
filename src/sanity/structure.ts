@@ -31,6 +31,7 @@ const singletonListItem = (
 
 // Popis shema koje se ručno prikazuju u strukturi
 const manuallyHandledSchemas = [
+  "ePotpisRecord",
   "metHomePage",
   "apartmentsRentPage",
   "landlordsPage",
@@ -253,6 +254,13 @@ export const structure: StructureResolver = (S) =>
               ),
             ]),
         ),
+      S.divider(),
+
+      // Private contracts are an additional section, independent of listing content.
+      S.listItem()
+        .title("Spremljeni ugovori")
+        .icon(DocumentsIcon)
+        .child(S.documentList().title("Spremljeni ugovori").filter('_type == "ePotpisRecord" && kind == "contract"')),
       S.divider(),
 
       // Blog

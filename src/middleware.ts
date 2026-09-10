@@ -1,3 +1,6 @@
+import { clerkMiddleware } from "@clerk/nextjs/server";
+import type { NextFetchEvent } from "next/server";
+import { clerkConfigured, isolatedAuthTest } from "./lib/epotpis/auth-config";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import {
@@ -26,7 +29,7 @@ function getLocaleFromRequest(request: NextRequest): Language["id"] {
   return DEFAULT_LANGUAGE.id;
 }
 
-export function middleware(request: NextRequest) {
+function siteMiddleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   const isStaticAsset =
@@ -42,6 +45,9 @@ export function middleware(request: NextRequest) {
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(X_NEXT_LOCALE_HEADER, locale);
+  const isContracts = pathname === "/ugovori" || pathname.startsWith("/ugovori/");
+  requestHeaders.set("x-met-contracts", isContracts ? "1" : "0");
+  if (isContracts) return NextResponse.next({ request: { headers: requestHeaders } });
 
   //In development turn off maintenance mode manually
   if (process.env.NEXT_PUBLIC_IS_MAINTENANCE_MODE === "true") {
@@ -78,8 +84,22 @@ export function middleware(request: NextRequest) {
   return response;
 }
 
+const withClerk = clerkMiddleware((_auth, request) => siteMiddleware(request));
+export function middleware(request: NextRequest, event: NextFetchEvent) {
+  const path = request.nextUrl.pathname;
+  const isAdmin = (path === "/ugovori" || path.startsWith("/ugovori/"))
+    && path !== "/ugovori/potpis" && !path.startsWith("/ugovori/potpis/");
+  const isPrivateApi = path.startsWith("/api/ugovori/") && !path.startsWith("/api/ugovori/sign/");
+  const isClerk = path === "/__clerk" || path.startsWith("/__clerk/");
+  if ((isAdmin || isPrivateApi || isClerk) && clerkConfigured() && !isolatedAuthTest()) {
+    return withClerk(request, event);
+  }
+  return siteMiddleware(request);
+}
+
 export const config = {
   matcher: [
+    "/api/ugovori/:path*",
     "/((?!api|_next/static|_next/image|assets|favicon.ico|icon.*|apple-icon.*|site.webmanifest|sw.js|admin).*)",
   ],
 };

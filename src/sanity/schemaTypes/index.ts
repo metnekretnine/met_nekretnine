@@ -41,8 +41,11 @@ import { listing } from "./listing";
 import { listingDetailsPage } from "./listingDetailsPage";
 import { listingExplorerSection } from "./listingExplorerSection";
 
+import { ePotpisRecord } from "./ePotpisRecord";
+
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
+    ePotpisRecord,
     localeString,
     localeRichText,
     contentSection,

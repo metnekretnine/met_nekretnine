@@ -9,7 +9,9 @@
     "lint": "next lint",
     "test": "jest",
     "e2e:test": "playwright test",
-    "sanity": "node scripts/confirm-sanity-import.mjs"
+    "sanity": "node scripts/confirm-sanity-import.mjs",
+    "postinstall": "node scripts/epotpis-assets.mjs",
+    "ugovori:test": "playwright test --config playwright.epotpis.config.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
@@ -46,8 +48,8 @@
     "next-sanity": "^10.0.6",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "19.1.9",
+    "react-dom": "19.1.9",
     "react-hook-form": "^7.62.0",
     "react-swiper": "^0.1.5",
     "resend": "^4.8.0",
@@ -57,7 +59,13 @@
     "swiper": "^11.2.10",
     "tailwind-merge": "^3.3.1",
     "ts-jest": "^29.4.1",
-    "zod": "^4.0.14"
+    "zod": "^4.0.14",
+    "@clerk/nextjs": "7.9.2",
+    "@clerk/localizations": "4.16.1",
+    "@pdf-lib/fontkit": "1.1.1",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "6.3.289",
+    "pngjs": "7.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -80,6 +88,11 @@
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
     "tw-animate-css": "^1.3.6",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@types/pngjs": "^6.0.5",
+    "groq-js": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=24.0.0"
   }
 }

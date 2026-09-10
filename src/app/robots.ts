@@ -9,15 +9,17 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin/", "/api"],
+        disallow: ["/admin/", "/api", "/ugovori"],
       },
       {
         userAgent: "GPTBot",
         allow: "/",
+        disallow: ["/ugovori", "/api/ugovori"],
       },
       {
         userAgent: "ChatGPT-User",
         allow: "/",
+        disallow: ["/ugovori", "/api/ugovori"],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

@@ -50,3 +50,7 @@ next-env.d.ts
 CLAUDE.md
 CODEX.md
 .ai/*
+# Isolated contracts verification artifacts and generated PDF worker
+/.data/
+/.next-*/
+/public/epotpis/pdf.worker.min.mjs

@@ -2,7 +2,7 @@ import { Geist } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import { VisualEditing } from "next-sanity";
-import { draftMode } from "next/headers";
+import { draftMode, headers } from "next/headers";
 import {
   CookieConsent,
   Footer,
@@ -39,8 +39,12 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const { isEnabled } = await draftMode();
   const lang = await getLang();
+  // Contracts share MET fonts and colors, with no public navigation or tracking scripts.
+  if ((await headers()).get("x-met-contracts") === "1") {
+    return <html lang={lang}><body className={`${geistSans.variable} font-sans antialiased`}>{children}</body></html>;
+  }
+  const { isEnabled } = await draftMode();
   const [
     navigationCms,
     footerCms,

@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "e2e",
+    "jest.setup.ts",
+    "jest.config.ts",
+    "playwright*.ts"
+  ],
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".next-epotpis-test/types/**/*.ts",
+    ".next/types/**/*.ts",
+    "jest.config.ts",
+    "jest.setup.ts",
+    "next-env.d.ts",
+    ".next-validation/types/**/*.ts"
+  ]
+}

@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
       { key: "Cache-Control", value: "private, no-store" },
     ];
     return [
+      { source: "/:path*", has: [{ type: "host", value: "ugovori\\.metnekretnine\\.hr(:\\d+)?" }], headers: headers.filter(header => header.key !== "Cache-Control") },
       { source: "/ugovori/:path*", headers },
       { source: "/api/ugovori/:path*", headers },
     ];

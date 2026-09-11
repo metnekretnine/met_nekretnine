@@ -47,5 +47,6 @@ function isLocalDevelopmentRequest(request: Request, origin: string): boolean {
 }
 export function requireSameOrigin(request: Request) {
   const origin = request.headers.get("origin");
-  if (!origin || (!isLocalDevelopmentRequest(request, origin) && origin !== baseUrl())) throw new EPotpisError("authError", 403);
+  const configuredOrigin = baseUrl();
+  if (!origin || (!isLocalDevelopmentRequest(request, origin) && origin !== configuredOrigin)) throw new EPotpisError("authError", 403);
 }

@@ -1,8 +1,18 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type BrowserContext } from "@playwright/test";
 import { createHmac } from "node:crypto";
 import { createContractPdf } from "../src/lib/epotpis/pdf";
 import { loadEPotpisTemplate } from "../src/lib/epotpis/templates";
 import { testContractInput } from "../src/lib/epotpis/test-data";
+
+// Exercise the production host locally, without sending requests to the deployed site.
+const contractsOrigin = "http://ugovori.metnekretnine.hr:3003";
+async function contractsHost(context: BrowserContext) {
+  await context.route(`${contractsOrigin}/**`, async route => {
+    const url = new URL(route.request().url()); url.hostname = "127.0.0.1";
+    const response = await route.fetch({ url: url.href, headers: { ...route.request().headers(), host: "ugovori.metnekretnine.hr:3003" }, maxRedirects: 0 });
+    await route.fulfill({ response });
+  });
+}
 
 test("production rejects legacy cookies and demo password without Clerk configuration", async ({ page, context, request }) => {
   const expires = String(Date.now() + 3600000);
@@ -17,7 +27,8 @@ test("production rejects legacy cookies and demo password without Clerk configur
   expect((await request.post("/api/ugovori/session", { data: { password: "met-demo-2026" }, headers: { Origin: "http://localhost:3003" } })).status()).toBe(401);
 });
 
-test("production signing captures two individual signatures in one confirmation", async ({ page }, testInfo) => {
+test("production signing captures two individual signatures in one confirmation", async ({ page, context }, testInfo) => {
+  await contractsHost(context);
   // Exercise the real renderer and worker without native APIs absent in Safari 18.
   await page.addInitScript(() => {
     Reflect.deleteProperty(Math, "sumPrecise");
@@ -26,7 +37,8 @@ test("production signing captures two individual signatures in one confirmation"
   let workerRequests = 0;
   await page.route("**/epotpis/pdf.worker.min.mjs*", async route => {
     workerRequests++;
-    const response = await route.fetch();
+    const url = new URL(route.request().url()); url.hostname = "127.0.0.1";
+    const response = await route.fetch({ url: url.href, headers: { ...route.request().headers(), host: "ugovori.metnekretnine.hr:3003" } });
     await route.fulfill({ response, body: `Reflect.deleteProperty(Math, "sumPrecise"); Reflect.deleteProperty(Map.prototype, "getOrInsertComputed");\n${await response.text()}` });
   });
   const token = "a".repeat(64);
@@ -53,7 +65,10 @@ test("production signing captures two individual signatures in one confirmation"
       await route.fulfill({ json: contract });
     } else { unexpected.push(path); await route.abort(); }
   });
-  await page.goto(`/ugovori/potpis/${token}`);
+  await page.goto(`${contractsOrigin}/potpis/${token}`);
+  await expect(page).toHaveURL(`${contractsOrigin}/potpis/${token}`);
+  await expect(page.locator("footer")).toHaveCount(0);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   const canvas = page.locator(".ep-signature-box canvas");
   const accept = page.getByRole("button", { name: "Prihvati potpis", exact: true });
   const sign = page.getByRole("button", { name: "POTPIŠI", exact: true });
@@ -174,4 +189,39 @@ test("contracts and public signing are excluded from indexing without blocking t
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
   await expect(page.locator("footer")).toHaveCount(0);
   expect(await page.locator('script[src*="clarity"],script[src*="googletagmanager"],script[src*="connect.facebook"]').count()).toBe(0);
+});
+
+
+test("contracts subdomain isolates administration, indexing and the public website", async ({ page, context, request }) => {
+  await contractsHost(context);
+  for (const path of ["/", "/novi", "/postavke", "/profil"]) {
+    const response = await page.goto(`${contractsOrigin}${path}`);
+    expect(response?.status(), path).toBe(200);
+    expect(response?.headers()["x-robots-tag"], path).toContain("noindex");
+    expect(response?.headers()["cache-control"], path).toContain("no-store");
+    await expect(page.locator(".ep-login [role=alert]")).toContainText("Prijava još nije postavljena");
+    await expect(page.locator("footer")).toHaveCount(0);
+    expect(await page.locator('script[src*="clarity"],script[src*="googletagmanager"],script[src*="connect.facebook"]').count()).toBe(0);
+    await expect(page).toHaveURL(`${contractsOrigin}${path}`);
+  }
+  const get = (path: string) => request.get(path, { headers: { Host: "ugovori.metnekretnine.hr" }, maxRedirects: 0 });
+  const robots = await get("/robots.txt");
+  expect(await robots.text()).toBe("User-agent: *\nDisallow: /\n");
+  expect(robots.headers()["x-robots-tag"]).toContain("noindex");
+  for (const path of ["/sitemap.xml", "/api/contact", "/ugovori", "/ugovori/potpis/unused"]) {
+    const response = await get(path);
+    expect(response.status(), path).toBe(404);
+    expect(response.headers()["x-robots-tag"], path).toContain("noindex");
+  }
+  expect((await get("/api/ugovori/contracts")).status()).toBe(503);
+  expect((await get("/api/ugovori/sign/invalid")).status()).toBe(404);
+  expect((await get("/epotpis/pdf.worker.min.mjs")).status()).toBe(200);
+  for (const path of ["/stanovi-za-najam?filter=test", "/admin/structure"]) {
+    const response = await get(path);
+    expect(response.status()).toBe(307);
+    expect(response.headers().location).toBe(`https://metnekretnine.hr${path}`);
+  }
+  for (const host of ["metnekretnine.hr", "www.metnekretnine.hr"]) {
+    expect((await request.get("/ugovori", { headers: { Host: host }, maxRedirects: 0 })).status()).toBe(404);
+  }
 });

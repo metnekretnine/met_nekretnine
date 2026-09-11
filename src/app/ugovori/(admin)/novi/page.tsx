@@ -1,7 +1,6 @@
 import { EPotpisCreate } from "@/components/EPotpisCreate/EPotpisCreate";
 import { testContractInput } from "@/lib/epotpis/test-data";
 
-export const metadata = { alternates: { canonical: "/ugovori/novi" } };
 
 export default function Page() {
   const testSamples = { single: testContractInput(false), joint: testContractInput(true) };

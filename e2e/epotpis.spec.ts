@@ -814,3 +814,29 @@ test("mobile signing preserves ink across rotation and lets each owner replace o
   expect(errors).toEqual([]);
   await context.close();
 });
+
+
+test("local contracts subdomain keeps login, client navigation and logout on short routes", async ({ page }) => {
+  const url = "http://ugovori.localhost:3002";
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(url);
+  await expect(page.locator('input[name="password"]')).toBeVisible();
+  await page.locator(".ep-login button").click();
+  await expect(page.locator("#ep-heading")).toHaveText("Pregled ugovora");
+  await expect(page.locator(".ep-brand")).toHaveAttribute("href", "/");
+  await page.getByRole("link", { name: "Postavke", exact: true }).click();
+  await expect(page).toHaveURL(`${url}/postavke`);
+  await expect(page.locator("#ep-heading")).toHaveText("Postavke");
+  await page.locator(".ep-back").click();
+  await expect(page).toHaveURL(`${url}/`);
+  await page.getByRole("link", { name: "Novi ugovor", exact: true }).click();
+  await expect(page).toHaveURL(`${url}/novi`);
+  await expect(page.locator("#ep-heading")).toHaveText("Novi ugovor");
+  await page.reload();
+  await expect(page.locator("#ep-heading")).toHaveText("Novi ugovor");
+  await page.getByRole("button", { name: "Odjavi se", exact: true }).click();
+  await expect(page).toHaveURL(`${url}/`);
+  await expect(page.locator('input[name="password"]')).toBeVisible();
+  expect(errors).toEqual([]);
+});

@@ -17,7 +17,7 @@ const fields = {
 } as const;
 const coOwnerFields = fields.ownerSection.filter(name => name !== "email");
 export function EPotpisCreate({ testSamples }: { testSamples: { single: ContractInput; joint: ContractInput } }) {
-  const { cms: c, hasSignature, busy, run, refresh, showCreated } = useEPotpisAdmin();
+  const { paths, cms: c, hasSignature, busy, run, refresh, showCreated } = useEPotpisAdmin();
   const router = useRouter();
   const [hasCoOwner, setHasCoOwner] = useState(false);
   const [oibErrors, setOibErrors] = useState<Record<string, string>>({});
@@ -55,7 +55,7 @@ export function EPotpisCreate({ testSamples }: { testSamples: { single: Contract
     if (!previewReady) return;
     await run(async () => {
       const created = await api<AdminContract>("/api/ugovori/contracts", formInput, { "Idempotency-Key": idempotency.current });
-      await refresh(); showCreated(created.signUrl); router.push("/ugovori");
+      await refresh(); showCreated(created.signUrl); router.push(paths.home);
     });
   }
   function checkOibInput(input: HTMLInputElement, showError: boolean) {
@@ -83,7 +83,7 @@ export function EPotpisCreate({ testSamples }: { testSamples: { single: Contract
       {name === "oib" && oibError && <span id={errorId} role="alert" className="ep-field-error">{oibError}</span>}
     </label>;
   }
-  if (!hasSignature) return <section className="ep-panel"><p className="ep-section-description">{c.signatureRequired}</p><Link className="ep-secondary" href="/ugovori/postavke">{c.settings}</Link></section>;
+  if (!hasSignature) return <section className="ep-panel"><p className="ep-section-description">{c.signatureRequired}</p><Link className="ep-secondary" href={paths.settings}>{c.settings}</Link></section>;
   return <>
         <form key={formVersion} onSubmit={prepare} className={previewUrl ? "ep-hidden" : "ep-create-form"}>
           <div className="ep-test-actions">

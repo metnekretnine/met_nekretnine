@@ -8,6 +8,7 @@ import type { AdminContract, ContractInput, ContractRow, ContractSnapshot, Publi
 import { ownerDisplayName } from "./types";
 import { emailDashes, emailHtml } from "./email";
 import { splitSignatureAnchor } from "./signature-geometry";
+import { signingUrl } from "./routes";
 
 // "preview" is retained only to display archived messages that were never sent.
 export interface OutboxRow { id: string; contractId: string; kind: string; recipient: string; subject: string; body: string; html?: string; attachment: boolean; status: "pending" | "preview" | "sending" | "delivered" | "failed" | "cancelled"; attemptedAt: string | null; leaseAt: string | null; providerId: string | null }
@@ -39,7 +40,7 @@ export async function adminContract(row: ContractRow, outbox?: OutboxRow[]): Pro
   const snapshot = JSON.parse(row.snapshot) as ContractSnapshot;
   const messages = (outbox ?? await listOutbox()).filter(m => m.contractId === row.id && m.status !== "cancelled");
   const status = messages.some(m => m.status === "failed") ? "failed" : messages.some(m => m.status === "pending" || m.status === "sending") ? "pending" : messages.length && messages.every(m => m.status === "preview") ? "preview" : messages.length ? "delivered" : "pending";
-  return { ...publicContract(row), id: row.id, createdAt: snapshot.createdAt, signUrl: `${baseUrl()}/ugovori/potpis/${snapshot.token}`, emailStatus: status };
+  return { ...publicContract(row), id: row.id, createdAt: snapshot.createdAt, signUrl: signingUrl(baseUrl(), snapshot.token), emailStatus: status };
 }
 export async function listContracts() {
   const [docs, outbox] = await Promise.all([listRecords<ContractRow>("contract"), listOutbox()]);
@@ -158,7 +159,7 @@ export async function deleteContract(id: string, confirmation: unknown) {
 }
 function enqueue(id: string, snapshot: ContractSnapshot, kind: "invitation" | "owner_signed" | "broker_signed", signedAt = "") {
   const c = snapshot.cms;
-  const values = { name: ownerDisplayName(snapshot.input), number: snapshot.number, link: `${baseUrl()}/ugovori/potpis/${snapshot.token}`, signedAt: signedAt ? new Date(signedAt).toLocaleString("hr-HR", { timeZone: "Europe/Zagreb" }) : "" };
+  const values = { name: ownerDisplayName(snapshot.input), number: snapshot.number, link: signingUrl(baseUrl(), snapshot.token), signedAt: signedAt ? new Date(signedAt).toLocaleString("hr-HR", { timeZone: "Europe/Zagreb" }) : "" };
   const subject = kind === "invitation" ? c.invitationSubject : kind === "owner_signed" ? c.signedSubject : c.brokerSignedSubject;
   const body = kind === "invitation" ? c.invitationBody : kind === "owner_signed" ? c.signedBody : c.brokerSignedBody;
   const recipient = kind === "broker_signed" ? process.env.EPOTPIS_RECIPIENT_EMAIL || "" : snapshot.input.email;

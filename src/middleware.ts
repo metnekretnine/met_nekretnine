@@ -14,6 +14,7 @@ import {
   UNDER_MAINTENANCE_LINK,
 } from "./lib/constants";
 
+
 function getLocaleFromRequest(request: NextRequest): Language["id"] {
   const locale = request.cookies.get(LOCALE_COOKIE_NAME)?.value;
 

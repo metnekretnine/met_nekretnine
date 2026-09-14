@@ -3,11 +3,12 @@
 Requires PyMuPDF. Only variable text is removed. Each first-page strip retains
 its original PDF text, embedded fonts and graphics; strips can move down when
 longer input needs more lines. The two attachments are copied unchanged except
-for the contract-number footer. The price table is never reconstructed.
+for the footer, which retains page numbers but omits contract numbers. The price table is never reconstructed.
 """
 import base64
 import hashlib
 import json
+import re
 from pathlib import Path
 import fitz
 
@@ -68,12 +69,12 @@ def prepare(path):
     owner_span = next(s for s in owner["spans"] if "[" in s["text"])
     return {"format": "original-pdf-v1", "pdf": base64.b64encode(pdf_bytes).decode(), "pdfSha256": hashlib.sha256(pdf_bytes).hexdigest(),
             "width": page.rect.width, "height": page.rect.height, "bounds": bounds, "fields": fields,
-            "subtitle": content(subtitle).replace("[BROJ]/[GODINA]", "{number}"), "subtitleBaseline": subtitle["spans"][0]["origin"][1],
+            "subtitle": re.sub(r"\s*\|\s*broj ugovora:.*$", "", content(subtitle), flags=re.I).strip(), "subtitleBaseline": subtitle["spans"][0]["origin"][1],
             "owner": {"x": owner_span["origin"][0], "baseline": owner_span["origin"][1], "text": owner_span["text"], "separator": "i "},
             "date": {"x": date["spans"][0]["origin"][0], "baseline": date["spans"][0]["origin"][1], "text": content(date)},
             "signerBaseline": signer["spans"][0]["origin"][1],
             "signatures": [{"x": rule["bbox"][0], "width": rule["bbox"][2] - rule["bbox"][0], "baseline": rule["spans"][0]["origin"][1]} for rule in rules],
-            "footer": footer.replace("[BROJ]/[GODINA]", "{number}").replace("stranica 2 od 3", "stranica {page} od {total}"), "footerBaseline": 824.5}
+            "footer": re.sub(r"\s*\|\s*Ugovor \[BROJ\]/\[GODINA\]", "", footer).replace("stranica 2 od 3", "stranica {page} od {total}"), "footerBaseline": 824.5}
 
 
 def main():

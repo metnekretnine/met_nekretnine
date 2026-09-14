@@ -1,4 +1,5 @@
 import { EPotpisContractDetails, contractStatusLabels, readContract } from "../components/EPotpisContractDetails";
+import { ownerDisplayName } from "@/lib/epotpis/types";
 import { defineField, defineType } from "sanity";
 
 /** Created only by the server with a private, dotted ID. Never through a Studio draft. */
@@ -16,7 +17,7 @@ export const ePotpisRecord = defineType({
       if (kind === "contract") {
         try {
           const { row, snapshot } = readContract(payload);
-          return { title, subtitle: `${contractStatusLabels[row.status] || row.status} · ${snapshot.input.propertyAddress}` };
+          return { title: ownerDisplayName(snapshot.input), subtitle: `${contractStatusLabels[row.status] || row.status} · ${snapshot.input.propertyAddress}` };
         } catch { return { title, subtitle: "Podaci ugovora nisu dostupni" }; }
       }
       return { title, subtitle: kind };

@@ -82,7 +82,7 @@ export function EPotpisSigner({ cmsData: c, token }: Props) {
     <main className="ep-signer-main">
       {loading ? <EPotpisLoader label={c.loading} /> : invalid ? <div className="ep-panel ep-success"><h1>{c.invalidTitle}</h1><p>{c.invalidDescription}</p></div> : contract && <>
         <div className="ep-sign-intro"><span className={`ep-round-icon ${signed ? "is-signed" : ""}`}>{signed ? <Check /> : <PenLine />}</span>
-          <p className="ep-eyebrow">{contract.number} · {contract.kind === "open" ? c.open : c.exclusive}</p>
+          <p className="ep-eyebrow">{contract.kind === "open" ? c.open : c.exclusive}</p>
           <h1 ref={resultHeading} tabIndex={-1}>{signed ? c.signedTitle : c.signTitle}</h1><p>{signed ? c.signedDescription : c.signDescription}</p>
         </div>
         <div className="ep-contract-summary"><strong>{contract.ownerName}</strong><span>{contract.propertyAddress}</span></div>

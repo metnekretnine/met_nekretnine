@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { networkInterfaces } from "node:os";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { PDFDocument } from "pdf-lib";
+import { testContractInput } from "./fixtures/epotpis-input";
 import { oibCheck } from "../src/lib/epotpis/oib";
 import { emailDashes, emailHtml } from "../src/lib/epotpis/email";
 import { createContractPdf, signContractPdf } from "../src/lib/epotpis/pdf";
@@ -15,14 +16,14 @@ const coOwner = { ownerName: "TEST - Ana Čačić", oib: "47926577116", ownerAdd
 const origin = "http://localhost:3002";
 const signature: Signature = { kind: "strokes", paths: [[[80,150],[120,80],[150,145],[180,75],[220,140],[280,100],[340,135],[410,80],[490,120],[560,90]]] };
 const secondSignature: Signature = { kind: "strokes", paths: signature.paths.map(path => path.map(([x, y]) => [x, 240 - y])) };
-const input: ContractInput = { contractNumber: "041/2026", kind: "open", consumer: true, ownerName: "TEST — Željko Čačić", oib: "12345678903", ownerAddress: "Testna ulica 12, Zagreb", phone: "+385 99 000 0000", email: "owner@example.test", signerName: "Željko Čačić", propertyAddress: "Testna ulica 18, Zagreb", descriptionField: "Stan 64 m², dvije sobe, balkon i spremište.", landRegistry: "k.o. Zagreb, zk. ul. 1234, k.č. 567/8", rent: 950, deposit: 1900, duration: "12 mjeseci", place: "Zagreb", date: "2026-09-09" };
+const input: ContractInput = { kind: "open", consumer: true, ownerName: "TEST — Željko Čačić", oib: "12345678903", ownerAddress: "Testna ulica 12, Zagreb", phone: "+385 99 000 0000", email: "owner@example.test", signerName: "Željko Čačić", propertyAddress: "Testna ulica 18, Zagreb", descriptionField: "Stan 64 m², dvije sobe, balkon i spremište.", landRegistry: "k.o. Zagreb, zk. ul. 1234, k.č. 567/8", rent: 950, deposit: 1900, duration: "12 mjeseci", place: "Zagreb", date: "2026-09-09" };
 const post = (request: APIRequestContext, path: string, data: unknown, headers: Record<string,string> = {}) => request.post(path, { data, headers: { Origin: origin, ...headers } });
 function sanityFixture() {
   const apiHost = readFileSync(".data/epotpis-test-sanity-url.txt", "utf8");
   expect(apiHost).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
   return createClient({ projectId: "epotpistest", dataset: "test", apiHost, useProjectHostname: false, apiVersion: "2026-09-01", token: "local-test-token", useCdn: false });
 }
-interface SentEmail { id: string; key: string; to: string[]; text: string; html: string; attachments?: { filename: string; content: string }[] }
+interface SentEmail { from: string; subject: string; id: string; key: string; to: string[]; text: string; html: string; attachments?: { filename: string; content: string }[] }
 async function sentEmails(request: APIRequestContext, contractId: string): Promise<SentEmail[]> {
   const url = readFileSync(".data/epotpis-test-sanity-url.txt", "utf8");
   const response = await request.get(`${url}/__emails`);
@@ -43,6 +44,17 @@ async function create(request: APIRequestContext, data = input, key = randomUUID
   const response = await post(request, "/api/ugovori/contracts", data, { "Idempotency-Key": key });
   expect(response.ok(), await response.text()).toBeTruthy();
   return response.json();
+}
+async function fillForm(page: Page, joint = false) {
+  const data = testContractInput(joint);
+  if (joint && !await page.locator('[name="coOwner.ownerName"]').count()) await page.getByRole("button", { name: "Dodaj drugog Nalogodavca", exact: true }).click();
+  for (const [name, value] of Object.entries(data)) {
+    if (name === "coOwner") {
+      for (const [field, text] of Object.entries(value)) await page.locator(`[name="coOwner.${field}"]`).fill(String(text));
+    } else if (name === "kind") await page.locator(`[name="kind"][value="${value}"]`).check();
+    else if (name === "consumer") await page.locator('[name="consumer"]').selectOption(String(value));
+    else await page.locator(`[name="${name}"]`).fill(String(value));
+  }
 }
 async function draw(page: Page) {
   await page.locator(".ep-signature-box canvas").scrollIntoViewIfNeeded();
@@ -85,11 +97,15 @@ test("signing coexists with the site and the full Studio", async ({ request }) =
   expect((await request.get("/admin/structure")).status()).toBe(200);
 });
 
-test("access, numbering, immutable PDF, consent, concurrent signatures and revocation", async ({ request }) => {
+test("access, internal IDs, immutable PDF, consent, concurrent signatures and revocation", async ({ request }) => {
   for (const oib of ["47926577116", "12345678903"]) expect(oibCheck(oib), oib).toBe(true);
   for (const oib of ["47926577115", "12345678904", "1234567890x", "1234567890", "123456789033", "HR47926577116", "hr47926577116", "HR1234567890x", "123 45678903"]) expect(oibCheck(oib), oib).toBe(false);
   expect((await request.get("/api/ugovori/contracts")).status()).toBe(401);
-  expect((await request.get("/api/ugovori/settings/numbering")).status()).toBe(401);
+  expect((await request.get("/api/ugovori/settings/signature")).status()).toBe(401);
+  for (const [path, data] of [
+    ["settings", { signature }], ["settings/signature/delete", { confirmed: true }],
+    ["preview", input], ["contracts", input],
+  ] as const) expect((await post(request, `/api/ugovori/${path}`, data)).status()).toBe(401);
   expect((await post(request, "/api/ugovori/settings/numbering", { nextSequence: 41 })).status()).toBe(401);
   expect((await request.get("/api/ugovori/sign/not-a-token")).status()).toBe(404);
   expect((await request.post("/api/ugovori/session", { data: { password: "met-demo-2026" }, headers: { Origin: "https://untrusted.example" } })).status()).toBe(403);
@@ -124,7 +140,7 @@ test("access, numbering, immutable PDF, consent, concurrent signatures and revoc
   const replay = await create(request, input, key);
   expect(replay.id).toBe(first.id);
   const concurrent = await Promise.all([create(request, { ...input, kind: "exclusive", consumer: false }), create(request), create(request)]);
-  expect(new Set([first, ...concurrent].map(c => c.number))).toEqual(new Set([input.contractNumber]));
+  for (const contract of [first, ...concurrent]) expect(contract).not.toHaveProperty("number");
   expect(new Set([first, ...concurrent].map(c => c.id)).size).toBe(4);
   const [exclusive] = concurrent;
   const exclusivePdf = await request.get(`/api/ugovori/contracts/${exclusive.id}/pdf`);
@@ -195,7 +211,7 @@ test("access, numbering, immutable PDF, consent, concurrent signatures and revoc
   expect((await post(request, `/api/ugovori/contracts/${revoked.id}/revoke`, {})).ok()).toBeTruthy();
   expect((await request.get(`/api/ugovori/sign/${revoked.signUrl.split("/").at(-1)}`)).status()).toBe(404);
   const next = await create(request);
-  expect(next.number).toBe(input.contractNumber);
+  expect(next).not.toHaveProperty("number");
   writeFileSync(".data/check-artifacts/open-signed.pdf", finalBytes);
 });
 
@@ -328,7 +344,7 @@ test("mobile LAN access supports authenticated creation and public signing over 
     const page = await context.newPage();
     await page.goto(`${lan}/ugovori/novi`);
     expect(await page.evaluate(() => window.isSecureContext)).toBe(false);
-    await page.getByRole("button", { name: "Popuni testnim podacima (2 osobe)", exact: true }).click();
+    await fillForm(page, true);
     await page.getByRole("button", { name: "Pregledaj ugovor", exact: true }).click();
     const send = page.getByRole("button", { name: "POŠALJI", exact: true });
     await expect(send).toBeEnabled();
@@ -353,7 +369,7 @@ test("mobile LAN access supports authenticated creation and public signing over 
   } finally { await context.close(); }
 });
 
-test("saved signatures stay closed and every contract accepts its own manual number", async ({ page, request }) => {
+test("saved signatures stay closed and new contracts have only an internal ID", async ({ page, request }) => {
   expect((await post(request, "/api/ugovori/session", { password: "met-demo-2026" })).status()).toBe(200);
   expect((await post(request, "/api/ugovori/settings", { signature })).status()).toBe(200);
   await page.goto("/ugovori");
@@ -384,25 +400,19 @@ test("saved signatures stay closed and every contract accepts its own manual num
   await expect(page.getByLabel("Broj sljedećeg ugovora", { exact: true })).toHaveCount(0);
   expect((await page.request.get("/api/ugovori/settings/numbering")).status()).toBe(404);
   await page.screenshot({ path: ".data/check-artifacts/settings-met.png", fullPage: true });
-  for (const contractNumber of ["", " ", "x".repeat(41), "041\n2026"]) {
-    for (const path of ["/api/ugovori/preview", "/api/ugovori/contracts"]) {
-      const invalid = await post(page.request, path, { ...input, contractNumber });
-      expect(invalid.status()).toBe(400);
-      expect((await invalid.json()).error).toBe("contractNumberInvalid");
-    }
-  }
-  const first = await create(page.request, { ...input, contractNumber: "  005/2026  " });
-  expect(first.number).toBe("005/2026");
+  const invalid = await post(page.request, "/api/ugovori/preview", { ...input, contractNumber: "005/2026" });
+  expect(invalid.status()).toBe(400);
+  const first = await create(page.request);
+  expect(first).not.toHaveProperty("number");
   writeFileSync(".data/check-artifacts/broker-dotted.pdf", await (await page.request.get(`/api/ugovori/contracts/${first.id}/pdf`)).body());
-  const repeated = await Promise.all([create(page.request, { ...input, contractNumber: "005/2026" }), create(page.request, { ...input, contractNumber: "005/2026" })]);
-  expect(repeated.map(contract => contract.number)).toEqual(["005/2026", "005/2026"]);
-  expect(new Set([first, ...repeated].map(contract => contract.id)).size).toBe(3);
-  expect((await create(page.request, { ...input, contractNumber: "1-A/2025" })).number).toBe("1-A/2025");
+  const stored = await sanityFixture().getDocument<{ payload: string }>(`epotpisDemo.contract.${first.id}`);
+  const snapshot = JSON.parse(JSON.parse(stored!.payload).snapshot);
+  expect(snapshot).not.toHaveProperty("number");
+  expect(snapshot.input).not.toHaveProperty("contractNumber");
   expect(await sanityFixture().fetch('count(*[_type == "ePotpisRecord" && kind == "counter"])')).toBe(0);
   await page.locator(".ep-back").click();
   await page.getByRole("link", { name: "Novi ugovor", exact: true }).click();
-  await expect(page.getByLabel("Broj ugovora", { exact: true })).toBeEmpty();
-  await expect(page.getByLabel("Broj ugovora", { exact: true })).toHaveAttribute("placeholder", "Npr. 041/2026");
+  await expect(page.getByLabel("Broj ugovora", { exact: true })).toHaveCount(0);
 });
 
 test("template and CMS edits leave sent and signed PDFs unchanged", async ({ request }) => {
@@ -423,7 +433,7 @@ test("template and CMS edits leave sent and signed PDFs unchanged", async ({ req
     const template = docs.find((doc: any) => doc.kind === "open");
     template.version = "test-updated-template";
     const layout = JSON.parse(template.layoutJson);
-    layout.subtitle = "IZMIJENJEN PREDLOŽAK | {number}";
+    layout.subtitle = "IZMIJENJEN PREDLOŽAK";
     template.layoutJson = JSON.stringify(layout);
     writeFileSync(fixture, JSON.stringify(docs));
     expect(await (await request.get(`${signPath}/pdf`)).body()).toEqual(originalPdf);
@@ -501,7 +511,7 @@ test("deletion removes contract content atomically and cannot revive old request
   }
   expect((await post(request, "/api/ugovori/contracts", input, { "Idempotency-Key": key })).status()).toBe(409);
   const racing = await create(request);
-  expect(racing.number).toBe(input.contractNumber);
+  expect(racing).not.toHaveProperty("number");
   const race = await Promise.all([post(request, signPath(racing), signData(racing)), post(request, `/api/ugovori/contracts/${racing.id}/delete`, { confirmation })]);
   expect([200, 404]).toContain(race[0].status()); expect(race[1].status()).toBe(200);
   expect((await request.get(`${signPath(racing)}/pdf`)).status()).toBe(404);
@@ -521,7 +531,8 @@ test("contract deletion requires the exact phrase and signature deletion uses a 
   const trigger = row.getByRole("button", { name: "Obriši ugovor", exact: true });
   await trigger.click();
   const dialog = page.getByRole("dialog");
-  await expect(dialog).toContainText(contract.number);
+  await expect(dialog).toContainText(contract.ownerName);
+  await expect(dialog).toContainText(contract.propertyAddress);
   await expect(dialog).toContainText("TEST - Brisanje ugovora");
   await expect(dialog.getByRole("button", { name: "Odustani", exact: true })).toBeFocused();
   const confirmation = dialog.getByRole("textbox");
@@ -565,17 +576,17 @@ test("both original PDF templates support joint owners and reject overflowing da
     const template = docs.find((doc: any) => doc.kind === kind);
     for (const joint of [false, true]) {
       const data = { ...input, kind, ...(joint ? { coOwner } : {}) };
-      const result = await createContractPdf(data, data.contractNumber, template, signature);
+      const result = await createContractPdf(data, template, signature);
       expect(result.anchor.height).toBe(13);
       expect(result.anchor.slots).toHaveLength(joint ? 2 : 1);
       const final = await signContractPdf(result.bytes, result.anchor, joint ? [signature, secondSignature] : [signature], "2026-09-10T12:00:00Z", cms);
       expect((await PDFDocument.load(final)).getPageCount()).toBe(3);
       writeFileSync(`.data/check-artifacts/native-${kind}-${joint ? "joint" : "single"}.pdf`, final);
     }
-    await expect(createContractPdf({ ...input, kind, coOwner, propertyAddress: "Duga adresa ".repeat(16), descriptionField: "Opširan opis nekretnine ".repeat(21), landRegistry: "Zemljišnoknjižni podaci ".repeat(12) }, input.contractNumber, template, signature)).rejects.toThrow("pdfContentTooLong");
+    await expect(createContractPdf({ ...input, kind, coOwner, propertyAddress: "Duga adresa ".repeat(16), descriptionField: "Opširan opis nekretnine ".repeat(21), landRegistry: "Zemljišnoknjižni podaci ".repeat(12) }, template, signature)).rejects.toThrow("pdfContentTooLong");
     const layout = JSON.parse(template.layoutJson);
     layout.pdfSha256 = "0".repeat(64);
-    await expect(createContractPdf({ ...input, kind }, input.contractNumber, { ...template, layoutJson: JSON.stringify(layout) }, signature)).rejects.toThrow("notConfigured");
+    await expect(createContractPdf({ ...input, kind }, { ...template, layoutJson: JSON.stringify(layout) }, signature)).rejects.toThrow("notConfigured");
   }
 });
 
@@ -588,7 +599,7 @@ test("admin routes support direct entry, refresh, client navigation and browser 
   await page.getByRole("button", { name: "Prijavi se", exact: true }).click();
   await expect(page).toHaveURL(/\/ugovori\/novi$/);
   await expect(page.getByRole("heading", { name: "Novi ugovor", exact: true })).toBeVisible();
-  await expect(page.locator('[name="contractNumber"]')).toBeVisible();
+  await expect(page.locator('[name="ownerName"]')).toBeVisible();
   await page.evaluate(() => { (window as unknown as { routeMarker: string }).routeMarker = "same-document"; });
   await page.getByRole("link", { name: "Postavke", exact: true }).click();
   await expect(page).toHaveURL(/\/ugovori\/postavke$/);
@@ -596,7 +607,7 @@ test("admin routes support direct entry, refresh, client navigation and browser 
   expect(await page.evaluate(() => (window as unknown as { routeMarker: string }).routeMarker)).toBe("same-document");
   await page.goBack();
   await expect(page).toHaveURL(/\/ugovori\/novi$/);
-  await expect(page.locator('[name="contractNumber"]')).toBeVisible();
+  await expect(page.locator('[name="ownerName"]')).toBeVisible();
   await page.goForward();
   await expect(page).toHaveURL(/\/ugovori\/postavke$/);
   await expect(page.getByRole("heading", { name: "Trenutni potpis", exact: true })).toBeVisible();
@@ -610,7 +621,7 @@ test("admin routes support direct entry, refresh, client navigation and browser 
   await expect(page).toHaveURL(/\/ugovori\/novi$/);
   await page.reload();
   await expect(page).toHaveURL(/\/ugovori\/novi$/);
-  await expect(page.locator('[name="contractNumber"]')).toBeEmpty();
+  await expect(page.locator('[name="ownerName"]')).toBeEmpty();
   await page.getByRole("button", { name: "Odjavi se", exact: true }).click();
   await expect(page.getByLabel("Lozinka", { exact: true })).toBeVisible();
   await page.goto("/ugovori/postavke");
@@ -618,30 +629,22 @@ test("admin routes support direct entry, refresh, client navigation and browser 
   await expect(page.locator(".ep-existing-signature")).toHaveCount(0);
 });
 
-test("test-fill buttons populate one or two owners and both contracts can be signed", async ({ page, request, browser }) => {
+test("blank forms accept one or two owners and both contracts can be signed without test controls", async ({ page, request, browser }) => {
   await post(request, "/api/ugovori/session", { password: "met-demo-2026" });
   await post(request, "/api/ugovori/settings", { signature });
   await page.goto("/ugovori/novi");
   await page.getByRole("button", { name: "Prijavi se", exact: true }).click();
-  const single = page.getByRole("button", { name: "Popuni testnim podacima (1 osoba)", exact: true });
-  const joint = page.getByRole("button", { name: "Popuni testnim podacima (2 osobe)", exact: true });
+  await expect(page.getByRole("button", { name: /Popuni testnim/ })).toHaveCount(0);
+  await expect(page.locator('[name="contractNumber"]')).toHaveCount(0);
+  await expect(page.locator('[name="ownerName"]')).toBeEmpty();
+  await expect(page.locator('[name="email"]')).toBeEmpty();
   const writes: string[] = [];
   page.on("request", event => { if (event.method() === "POST" && event.url().includes("/api/ugovori/")) writes.push(event.url()); });
-  await joint.click();
-  await expect(page.locator('[name="coOwner.email"]')).toHaveCount(0);
-  await page.locator('[name="oib"]').fill("12345678904");
-  await page.locator('[name="oib"]').blur();
-  await expect(page.locator("#ep-oib-error")).toBeVisible();
-  await single.click();
-  await expect(page.locator('[name="coOwner.ownerName"]')).toHaveCount(0);
-  await expect(page.locator("#ep-oib-error")).toHaveCount(0);
-  expect(await page.locator(".ep-create-form").evaluate((form: HTMLFormElement) => form.checkValidity())).toBe(true);
-  expect(writes).toHaveLength(0);
   for (const two of [false, true]) {
     if (two) await page.getByRole("link", { name: "Novi ugovor", exact: true }).click();
     const beforeFill = writes.length;
-    await (two ? joint : single).click();
-    await expect(page.locator('[name="email"]')).toHaveValue("filipivanovic7@gmail.com");
+    await fillForm(page, two);
+    await expect(page.locator('[name="email"]')).toHaveValue("owner@example.test");
     await expect(page.locator('[name="ownerName"]')).toHaveValue("Marko Horvat");
     if (two) {
       await expect(page.locator('[name="coOwner.ownerName"]')).toHaveValue("Ana Horvat");
@@ -668,7 +671,7 @@ test("test-fill buttons populate one or two owners and both contracts can be sig
     await expect(page.locator(".ep-share input")).toHaveValue(contract.signUrl);
     const stored = await sanityFixture().getDocument<{ payload: string }>(`epotpisDemo.contract.${contract.id}`);
     const saved = JSON.parse(JSON.parse(stored!.payload).snapshot).input;
-    expect(saved.email).toBe("filipivanovic7@gmail.com");
+    expect(saved.email).toBe("owner@example.test");
     if (two) {
       expect(saved.coOwner).toMatchObject({ ownerName: "Ana Horvat", oib: "98765432106" });
       expect(saved.coOwner).not.toHaveProperty("email");
@@ -701,7 +704,15 @@ test("test-fill buttons populate one or two owners and both contracts can be sig
     expect(messages.every((message: { status: string }) => message.status === "delivered")).toBe(true);
     const sent = await sentEmails(request, contract.id);
     expect(sent).toHaveLength(3);
-    expect(sent.find(email => email.key.endsWith("-owner_signed"))?.to).toEqual(["filipivanovic7@gmail.com"]);
+    for (const email of sent) {
+      expect(email.from).toBe("Maja Mara | MET d.o.o. <sender@example.test>");
+      expect(email.subject + email.text + email.html).not.toMatch(/\{number\}|broj ugovora|TEST-00/);
+      expect(email.text).toContain("Savska cesta 32");
+      for (const attachment of email.attachments || []) expect(attachment.filename).toBe("MET-ugovor-potpisan.pdf");
+    }
+    expect(sent.find(email => email.key.endsWith("-invitation"))?.text).toMatch(/^Poštovani,\n/);
+    expect(sent.find(email => email.key.endsWith("-broker_signed"))?.text).toContain(`Ugovor za ${two ? "Marko Horvat i Ana Horvat" : "Marko Horvat"} uspješno je potpisan.`);
+    expect(sent.find(email => email.key.endsWith("-owner_signed"))?.to).toEqual(["owner@example.test"]);
     expect(sent.find(email => email.key.endsWith("-broker_signed"))?.to).toEqual(["broker@example.test"]);
     for (const email of sent.filter(email => email.attachments)) {
       expect(Buffer.from(email.attachments![0].content, "base64")).toEqual(await final.body());

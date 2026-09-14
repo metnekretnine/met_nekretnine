@@ -12,7 +12,7 @@ export function readContract(payload: unknown) {
   if (typeof payload !== "string") throw new Error("Missing payload");
   const row = JSON.parse(payload) as ContractRow;
   const snapshot = JSON.parse(row.snapshot) as ContractSnapshot;
-  if (!snapshot.input || !snapshot.number) throw new Error("Missing snapshot");
+  if (!snapshot.input) throw new Error("Missing snapshot");
   return { row, snapshot };
 }
 function contractDate(value?: string) {
@@ -59,10 +59,10 @@ export function ContractDetails({ payload }: { payload: unknown }) {
   const { row, snapshot } = data;
   const input = snapshot.input;
   const status = row.status === "sent" && Date.parse(snapshot.expiresAt) < Date.now() ? "expired" : row.status;
-  const filename = `MET-${snapshot.number.replace(/[^\p{L}\p{N}._-]+/gu, "-")}`;
+  const filename = "MET-ugovor";
   const people = [input, ...(input.coOwner ? [input.coOwner] : [])];
   return <div style={{ padding: "0 8px", lineHeight: 1.5 }}>
-    <Section title={`Ugovor ${snapshot.number}`}><Details values={[
+    <Section title="Ugovor"><Details values={[
       ["Status ugovora", contractStatusLabels[status] || status],
       ["Vrsta posredovanja", input.kind === "exclusive" ? "Isključivo posredovanje" : "Otvoreno posredovanje"],
       ["Izrađen", date(snapshot.createdAt)], ["Potpisan", date(row.signed_at)],

@@ -17,11 +17,12 @@ beforeEach(() => {
 afterEach(cleanup);
 test("existing records show both owners and download saved PDF blobs without an API", async () => {
   const { unmount } = render(<ContractDetails payload={payload()} />);
+  expect(screen.queryByText(/041\/2026/)).not.toBeInTheDocument();
   expect(screen.getByText("Marko Horvat")).toBeVisible();
   expect(screen.getByText("Ana Horvat")).toBeVisible();
   expect(screen.getByText("Ilica 10")).toBeVisible();
   expect(screen.getByText("Potpisan", { selector: "dd" })).toBeVisible();
-  await waitFor(() => expect(screen.getByRole("link", { name: "Preuzmi potpisani PDF" })).toHaveAttribute("download", "MET-041-2026-potpisan.pdf"));
+  await waitFor(() => expect(screen.getByRole("link", { name: "Preuzmi potpisani PDF" })).toHaveAttribute("download", "MET-ugovor-potpisan.pdf"));
   expect(screen.getByRole("link", { name: "Preuzmi PDF prije potpisa" })).toHaveAttribute("href", "blob:saved-pdf");
   const blob = (URL.createObjectURL as jest.Mock).mock.calls[0][0] as Blob;
   const bytes = await new Promise<string>(resolve => { const reader = new FileReader(); reader.onload = () => resolve(reader.result as string); reader.readAsText(blob); });

@@ -10,7 +10,6 @@ const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine(value => {
   return !Number.isNaN(parsed.valueOf()) && parsed.toISOString().slice(0, 10) === value && Number(value.slice(0, 4)) >= 2020 && Number(value.slice(0, 4)) <= 2100;
 });
 export const contractSchema = z.object({
-  contractNumber: text(40).refine(value => !/[\r\n]/.test(value)),
   coOwner: z.object({
     ownerName: text(120), oib: z.string().transform(normalizeOib).refine(oibCheck),
     ownerAddress: text(200), phone: text(40), signerName: text(120),
@@ -23,7 +22,7 @@ export const contractSchema = z.object({
 }).strict();
 export function validateContract(value: unknown) {
   const parsed = contractSchema.safeParse(value);
-  if (!parsed.success) throw new EPotpisError(parsed.error.issues.some(issue => issue.path.includes("oib")) ? "oibInvalid" : parsed.error.issues.some(issue => issue.path[0] === "contractNumber") ? "contractNumberInvalid" : "validationError");
+  if (!parsed.success) throw new EPotpisError(parsed.error.issues.some(issue => issue.path.includes("oib")) ? "oibInvalid" : "validationError");
   return parsed.data;
 }
 export function validateSignature(value: unknown, allowPng = false): Signature {

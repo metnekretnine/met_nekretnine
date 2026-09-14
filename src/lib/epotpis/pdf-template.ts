@@ -36,7 +36,7 @@ function wrap(text: string, font: PDFFont, size: number, width: number, firstWid
   return lines;
 }
 
-export async function populateOriginalPdf(pdf: PDFDocument, input: ContractInput, number: string, layout: OriginalPdfLayout, font: PDFFont) {
+export async function populateOriginalPdf(pdf: PDFDocument, input: ContractInput, layout: OriginalPdfLayout, font: PDFFont) {
   const bytes = Buffer.from(layout.pdf, "base64");
   if (createHash("sha256").update(bytes).digest("hex") !== layout.pdfSha256) throw new EPotpisError("notConfigured", 503);
   const source = await PDFDocument.load(bytes);
@@ -83,7 +83,7 @@ export async function populateOriginalPdf(pdf: PDFDocument, input: ContractInput
     const embedded = await pdf.embedPage(source.getPage(index), { left: 0, right: layout.width, top: layout.height - top, bottom: layout.height - bottom });
     page.drawPage(embedded, { x: 0, y: layout.height - bottom - offset, width: layout.width, height: bottom - top });
   }
-  centered(replace(layout.subtitle, { number }), layout.subtitleBaseline, 9.5);
+  centered(layout.subtitle, layout.subtitleBaseline, 9.5);
   measured.owners.forEach((text, index) => draw(text, index ? left : layout.owner.x, layout.owner.baseline + index * measured.lineHeight));
   for (const field of measured.fields) {
     const shift = measured.ownerExtra + measured.rows.slice(0, field.row).reduce((sum, n) => sum + n, 0);
@@ -100,7 +100,7 @@ export async function populateOriginalPdf(pdf: PDFDocument, input: ContractInput
   const attachments = await pdf.copyPages(source, input.consumer ? [6, 7] : [6]);
   attachments.forEach(attachment => pdf.addPage(attachment));
   pdf.getPages().forEach((p, index) => {
-    const text = replace(layout.footer, { number, page: String(index + 1), total: String(pdf.getPageCount()) });
+    const text = replace(layout.footer, { page: String(index + 1), total: String(pdf.getPageCount()) });
     p.drawText(text, { x: (layout.width - font.widthOfTextAtSize(text, 8)) / 2, y: layout.height - layout.footerBaseline, font, size: 8, color: rgb(0, 0, 0) });
   });
   return { anchor: splitSignatureAnchor(anchors[0], people.length), brokerAnchor: anchors[1] };

@@ -22,10 +22,9 @@ async function fontFor(pdf: PDFDocument, bold = false) {
   // Embed complete static fonts: fontkit subsetting drops composite glyph outlines in Arimo.
   return pdf.embedFont(await fontBytes[file], { subset: false });
 }
-function substitutions(input: ContractInput, number: string) {
+function substitutions(input: ContractInput) {
   const [year, month, day] = input.date.split("-");
   return {
-    BROJ: number.includes("/") ? number.split("/")[0] : number, GODINA: number.includes("/") ? number.split("/")[1] : year,
     "IME I PREZIME / NAZIV": ownerDisplayName(input), OIB: [input.oib, input.coOwner?.oib].filter(Boolean).join(" i "), ADRESA: [input.ownerAddress, input.coOwner?.ownerAddress].filter(Boolean).join("; "), TELEFON: [input.phone, input.coOwner?.phone].filter(Boolean).join("; "),
     "E-POŠTA": input.email, "ADRESA NEKRETNINE": input.propertyAddress,
     "OPIS, POVRŠINA I PRIPADCI NEKRETNINE": input.descriptionField, "ZK PODACI": input.landRegistry,
@@ -34,13 +33,14 @@ function substitutions(input: ContractInput, number: string) {
     MJESTO: input.place, DATUM: `${Number(day)}. ${Number(month)}. ${year}`, "IME I PREZIME / FUNKCIJA": [input.signerName, input.coOwner?.signerName].filter(Boolean).join(" i "),
   };
 }
+const withoutContractNumber = (text: string) => text.replace(/(?:\s*\|\s*)?(?:broj ugovora:|ugovor)\s*\[BROJ\]\/\[GODINA\]/gi, "");
 interface Draw { text: string; x: number; top: number; size: number; bold: boolean }
 function pageLayout(blocks: TemplateBlock[], font: PDFFont, boldFont: PDFFont, values: Record<string, string>, scale: number) {
   const commands: Draw[] = [];
   const characterSet = new Set(font.getCharacterSet());
   let anchor: SignAnchor | null = null;
   function replace(text: string) {
-    const result = text.replace(/\[([^\]]+)\]/g, (match, key) => values[key] ?? match);
+    const result = withoutContractNumber(text).replace(/\[([^\]]+)\]/g, (match, key) => values[key] ?? match);
     if (/\[[^\]]+\]/.test(result)) throw new EPotpisError("validationError");
     for (const char of result.replace(/[\n\r\t]/g, "")) {
       if (!characterSet.has(char.codePointAt(0)!)) throw new EPotpisError("validationError");
@@ -142,20 +142,20 @@ export async function drawSignature(pdf: PDFDocument, page: PDFPage, signature: 
     }
   }
 }
-export async function createContractPdf(input: ContractInput, number: string, template: EPotpisTemplate, broker: Signature) {
+export async function createContractPdf(input: ContractInput, template: EPotpisTemplate, broker: Signature) {
   const pdf = await PDFDocument.create();
   const font = await fontFor(pdf);
   const parsedLayout = JSON.parse(template.layoutJson) as TemplateLayout | OriginalPdfLayout;
   if ("format" in parsedLayout && parsedLayout.format === "original-pdf-v1") {
-    const { anchor, brokerAnchor } = await populateOriginalPdf(pdf, input, number, parsedLayout, font);
+    const { anchor, brokerAnchor } = await populateOriginalPdf(pdf, input, parsedLayout, font);
     await drawSignature(pdf, pdf.getPage(0), broker, brokerAnchor);
-    pdf.setTitle(number); pdf.setAuthor("MET d.o.o."); pdf.setSubject(template.version);
+    pdf.setTitle("MET - Ugovor o posredovanju"); pdf.setAuthor("MET d.o.o."); pdf.setSubject(template.version);
     return { bytes: await pdf.save(), anchor };
   }
   const boldFont = await fontFor(pdf, true);
   const layout = parsedLayout as TemplateLayout;
   const pages = input.consumer ? layout.pages : layout.pages.slice(0, 2);
-  const values = substitutions(input, number);
+  const values = substitutions(input);
   let anchor: SignAnchor | null = null;
   for (let index = 0; index < pages.length; index++) {
     let scale = 1;
@@ -168,7 +168,7 @@ export async function createContractPdf(input: ContractInput, number: string, te
       page.drawText(command.text, opts);
     }
     const footerValues = { ...values, STRANICA: String(index + 1), UKUPNO: String(pages.length) };
-    const footer = layout.footer.replace(/\[([^\]]+)\]/g, (_, key) => footerValues[key as keyof typeof footerValues]);
+    const footer = withoutContractNumber(layout.footer).replace(/\[([^\]]+)\]/g, (_, key) => footerValues[key as keyof typeof footerValues]);
     const size = 7.2;
     page.drawText(footer, { x: (WIDTH - font.widthOfTextAtSize(footer, size)) / 2, y: 11, size, font });
     if (index === 0 && result.anchor) {
@@ -177,7 +177,7 @@ export async function createContractPdf(input: ContractInput, number: string, te
     }
   }
   if (!anchor) throw new EPotpisError("error", 500);
-  pdf.setTitle(number); pdf.setAuthor("MET d.o.o."); pdf.setSubject(template.version);
+  pdf.setTitle("MET - Ugovor o posredovanju"); pdf.setAuthor("MET d.o.o."); pdf.setSubject(template.version);
   return { bytes: await pdf.save(), anchor };
 }
 export async function signContractPdf(bytes: Uint8Array, anchor: SignAnchor, signature: Signature | Signature[], signedAt: string, cms: EPotpisTexts) {

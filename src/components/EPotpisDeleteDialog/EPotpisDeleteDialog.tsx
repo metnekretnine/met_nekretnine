@@ -35,7 +35,7 @@ export function EPotpisDeleteDialog({ cmsData: c, contract, onConfirm, onClose, 
         onEscapeKeyDown={event => { if (busy) event.preventDefault(); }} onPointerDownOutside={event => event.preventDefault()}>
         <span className="ep-delete-icon" aria-hidden="true"><Trash2 size={22} /></span>
         <Dialog.Title>{contract ? c.deleteContractTitle : c.deleteSignatureTitle}</Dialog.Title>
-        {contract && <p className="ep-delete-target"><strong>{contract.number}</strong><span>{contract.ownerName}</span></p>}
+        {contract && <p className="ep-delete-target"><strong>{contract.ownerName}</strong><span>{contract.propertyAddress}</span></p>}
         <Dialog.Description className="ep-section-description">{contract ? c.deleteContractDescription : c.deleteSignatureDescription}</Dialog.Description>
         <form onSubmit={submit} aria-busy={busy}>
           {contract && <label className="ep-field">{c.deleteContractConfirmationLabel}

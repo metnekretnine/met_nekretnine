@@ -27,7 +27,7 @@ Cijela poddomena ima noindex/nofollow/noarchive HTTP zaglavlja, a stranice ugovo
 
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`: odgovarajuća Clerk instanca.
 - `EPOTPIS_BASE_URL=https://ugovori.metnekretnine.hr`: origin, bez putanje. Novi linkovi za potpis dodaju `/potpis/<token>`. Za lokalni origin bez poddomene dodaje se `/ugovori/potpis/<token>`.
-- `EPOTPIS_EMAIL_FROM`, `EPOTPIS_RECIPIENT_EMAIL`: pošiljatelj i agencijski primatelj završnog PDF-a.
+- `EPOTPIS_EMAIL_FROM`, `EPOTPIS_RECIPIENT_EMAIL`: verificirana adresa pošiljatelja i agencijski primatelj završnog PDF-a. Prikazni naziv pošiljatelja aplikacija postavlja na `Maja Mara | MET d.o.o.`; postojeća vrijednost `Ime <adresa>` također radi.
 - `EPOTPIS_RESEND_API_KEY`: zaseban ključ za potpise, da kontaktne forme nastave koristiti svoj postojeći `RESEND_API_KEY`. Ako nije postavljen, koristi se zajednički ključ.
 
 Emailovi se uvijek šalju putem Resenda, i lokalno i u produkciji: poziv pri slanju ugovora te završni PDF nakon potpisa. Potrebni su Resend ključ, pošiljatelj i agencijski primatelj. Stare arhivirane preview poruke ostaju neposlane.
@@ -74,3 +74,14 @@ pnpm exec playwright test --config playwright.epotpis-production.config.ts
 `ugovori:test` koristi lokalni mock na portu 3002 i zaseban build. Testni Node preload presreće Resend zahtjeve i šalje ih lokalnom mocku, uz lažni API ključ; provjeravaju se primatelji, privitci i ponavljanje neuspjelog slanja. Produkcijski test pokreće build na portu 3003, s isključenim Clerk ključevima i zapisivanjem ugovora, te provjerava javni web, SEO, preusmjeravanja, zabranu stare lozinke/kolačića i javno potpisivanje s presretnutim API odgovorima. Ne šalje emailove niti zapisuje u pravi Sanity. `EPOTPIS_AUTH_TEST_MODE`, `EPOTPIS_SANITY_TEST_URL` i `EPOTPIS_BUILD_DIR` nisu Vercel postavke.
 
 Nakon objave ručno proći stvarnu Clerk prijavu i dostavu emaila na poddomeni. Kod je pripremljen lokalno; nema deploymenta ni promjena udaljenih Sanity podataka.
+
+## Završne korekcije aplikacije (14. 9. 2026.)
+
+- Novi ugovori nemaju ručni ni automatski vidljiv broj. Obrazac, popis, stranica za potpisivanje, Sanity prikaz, novi PDF-ovi, emailovi i nazivi preuzetih datoteka koriste podatke ugovora bez broja. Interni ID ostaje isti kroz izradu, ponavljanje zahtjeva i brisanje.
+- Poslani i potpisani PDF-ovi ostaju izvorno spremljeni dokumenti. U njima se ne uklanja stari broj naknadnim prepravljanjem. Nove obavijesti koriste aktualne neutralne tekstove; već poslani emailovi i njihov zapis ne prepisuju se.
+- Poziv počinje s „Poštovani,“; agencijska obavijest glasi „Ugovor za [ime/imena nalogodavaca] uspješno je potpisan.“ Poslovna adresa ostaje Savska cesta 32.
+- Obrazac nema gumbe za testno popunjavanje. Izmišljeni primjeri nalaze se samo u `e2e/fixtures`, izvan aplikacijskih ruta; osobni email developera uklonjen je iz primjera.
+- Stvarni potpis postavlja se nakon prijave u **Postavke → Potpis posrednika → Zamijeni trenutni potpis → Spremi potpis** (može se nacrtati ili učitati PNG). Zamjena prepisuje aktivnu postavku; ne mijenja potpise unutar postojećih PDF-ova ni njihovu povijest. Za uklanjanje bez zamjene služi **Obriši potpis**. Bez spremljenog potpisa izrada novih ugovora je blokirana.
+- Čitanje, spremanje i brisanje zasebnog potpisa te izrada pregleda i novog ugovora zahtijevaju prijavljenog administratora na poslužitelju. Javni link daje pristup konkretnom poslanom dokumentu i potpisivanju tog dokumenta; ne daje pristup postavci potpisa. Korisnici servisnih računa i ključeva i dalje imaju prava dodijeljena u tim servisima.
+- Produkcijski testni ugovori nisu programski brisani. Maja ih može obrisati nakon završnog testa. Stvarni potpis mora postaviti ona; aplikacija ne može iz proizvoljnog crteža pouzdano zaključiti predstavlja li TEST ili pravi potpis.
+- Ove izmjene ne prenose vlasništvo računa, ne mijenjaju planove ni naplatu, ne oduzimaju pristupe i ne objavljuju novu Politiku privatnosti (tekst priloga nije dostavljen).

@@ -11,3 +11,10 @@ export function baseUrl() {
   return url.origin;
 }
 export const resendApiKey = () => process.env.EPOTPIS_RESEND_API_KEY || process.env.RESEND_API_KEY;
+
+export function emailSender() {
+  const configured = process.env.EPOTPIS_EMAIL_FROM?.trim() || "";
+  const address = configured.match(/<([^<>]+)>$/)?.[1]?.trim() || configured;
+  if (!/^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(address)) throw new EPotpisError("notConfigured", 503);
+  return `Maja Mara | MET d.o.o. <${address}>`;
+}

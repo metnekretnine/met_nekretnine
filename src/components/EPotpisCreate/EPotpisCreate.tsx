@@ -16,7 +16,7 @@ const fields = {
   agreementSection: ["place", "date"],
 } as const;
 const coOwnerFields = fields.ownerSection.filter(name => name !== "email");
-export function EPotpisCreate({ testSamples }: { testSamples: { single: ContractInput; joint: ContractInput } }) {
+export function EPotpisCreate() {
   const { paths, cms: c, hasSignature, busy, run, refresh, showCreated } = useEPotpisAdmin();
   const router = useRouter();
   const [hasCoOwner, setHasCoOwner] = useState(false);
@@ -24,16 +24,8 @@ export function EPotpisCreate({ testSamples }: { testSamples: { single: Contract
   const [previewUrl, setPreviewUrl] = useState("");
   const [previewReady, setPreviewReady] = useState(false);
   const [formInput, setFormInput] = useState<ContractInput | null>(null);
-  const [defaults, setDefaults] = useState<Partial<ContractInput>>({});
-  const [formVersion, setFormVersion] = useState(0);
   const idempotency = useRef("");
   useEffect(() => () => { if (previewUrl.startsWith("blob:")) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
-  async function fillTestData(joint: boolean) {
-    await run(async () => {
-      setDefaults(joint ? testSamples.joint : testSamples.single); setHasCoOwner(joint); setOibErrors({});
-      setPreviewUrl(""); setFormInput(null); setPreviewReady(false); setFormVersion(value => value + 1);
-    });
-  }
   async function prepare(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(event.currentTarget));
@@ -66,10 +58,9 @@ export function EPotpisCreate({ testSamples }: { testSamples: { single: Contract
   function renderField(name: (typeof fields)[keyof typeof fields][number], prefix = "") {
     const fieldName = `${prefix}${name}`;
     const oibError = oibErrors[fieldName];
-    const defaultValue = prefix ? defaults.coOwner?.[name as keyof ContractOwner] : defaults[name];
     const errorId = `ep-${fieldName.replace(".", "-")}-error`;
     return <label key={fieldName} className={`ep-field ${name === "descriptionField" || name === "landRegistry" ? "ep-wide" : ""}`}>{c[name]}
-      {name === "descriptionField" || name === "landRegistry" ? <textarea defaultValue={defaultValue} name={fieldName} placeholder={c[`${name}Placeholder`]} required maxLength={name === "descriptionField" ? 500 : 300} rows={2} /> : <input name={fieldName} placeholder={c[`${name}Placeholder`]} required
+      {name === "descriptionField" || name === "landRegistry" ? <textarea name={fieldName} placeholder={c[`${name}Placeholder`]} required maxLength={name === "descriptionField" ? 500 : 300} rows={2} /> : <input name={fieldName} placeholder={c[`${name}Placeholder`]} required
         type={name === "email" ? "email" : name === "phone" ? "tel" : name === "date" ? "date" : name === "rent" || name === "deposit" ? "number" : "text"}
         inputMode={name === "oib" ? "numeric" : name === "phone" ? "tel" : undefined}
         minLength={name === "oib" ? 11 : undefined} pattern={name === "oib" ? "[0-9]{11}" : undefined}
@@ -79,29 +70,24 @@ export function EPotpisCreate({ testSamples }: { testSamples: { single: Contract
         onInvalid={name === "oib" ? e => checkOibInput(e.currentTarget, true) : undefined}
         aria-invalid={name === "oib" ? Boolean(oibError) : undefined} aria-describedby={name === "oib" && oibError ? errorId : undefined}
         min={name === "rent" ? 0.01 : name === "deposit" ? 0 : undefined} max={name === "rent" || name === "deposit" ? 9999999 : undefined} step={name === "rent" || name === "deposit" ? "0.01" : undefined}
-        defaultValue={defaultValue ?? (name === "date" ? new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Zagreb" }).format(new Date()) : name === "place" ? "Zagreb" : undefined)} />}
+        defaultValue={name === "date" ? new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Zagreb" }).format(new Date()) : name === "place" ? "Zagreb" : undefined} />}
       {name === "oib" && oibError && <span id={errorId} role="alert" className="ep-field-error">{oibError}</span>}
     </label>;
   }
   if (!hasSignature) return <section className="ep-panel"><p className="ep-section-description">{c.signatureRequired}</p><Link className="ep-secondary" href={paths.settings}>{c.settings}</Link></section>;
   return <>
-        <form key={formVersion} onSubmit={prepare} className={previewUrl ? "ep-hidden" : "ep-create-form"}>
-          <div className="ep-test-actions">
-            <button type="button" className="ep-secondary" disabled={busy} onClick={() => void fillTestData(false)}>{c.fillTestSingle}</button>
-            <button type="button" className="ep-secondary" disabled={busy} onClick={() => void fillTestData(true)}>{c.fillTestJoint}</button>
-          </div>
-          <section className="ep-panel"><label className="ep-field">{c.contractNumber}<input name="contractNumber" defaultValue={defaults.contractNumber} placeholder={c.contractNumberPlaceholder} required maxLength={40} /></label>
-            <p className="ep-section-description">{c.contractNumberDescription}</p><h2>{c.contractType}</h2><div className="ep-type-options">
-            <label><input type="radio" name="kind" value="open" defaultChecked={defaults.kind !== "exclusive"} required /><span>{c.open}</span></label>
-            <label><input type="radio" name="kind" value="exclusive" defaultChecked={defaults.kind === "exclusive"} /><span>{c.exclusive}</span></label>
+        <form onSubmit={prepare} className={previewUrl ? "ep-hidden" : "ep-create-form"}>
+          <section className="ep-panel"><h2>{c.contractType}</h2><div className="ep-type-options">
+            <label><input type="radio" name="kind" value="open" defaultChecked required /><span>{c.open}</span></label>
+            <label><input type="radio" name="kind" value="exclusive" /><span>{c.exclusive}</span></label>
           </div></section>
           {Object.entries(fields).map(([section, names]) => <section className="ep-panel" key={section}><h2>{c[section as keyof typeof c]}</h2><div className="ep-form-grid">
             {names.map(name => renderField(name))}
-            {section === "ownerSection" && <label className="ep-field">{c.consumer}<select name="consumer" defaultValue={String(defaults.consumer ?? true)}><option value="true">{c.yes}</option><option value="false">{c.no}</option></select></label>}
+            {section === "ownerSection" && <label className="ep-field">{c.consumer}<select name="consumer" defaultValue="true"><option value="true">{c.yes}</option><option value="false">{c.no}</option></select></label>}
           </div>{section === "ownerSection" && <div className="ep-co-owner">
             {hasCoOwner ? <fieldset><legend>{c.coOwnerSection}</legend><p className="ep-section-description">{c.coOwnerDescription}</p>
               <div className="ep-form-grid">{coOwnerFields.map(name => renderField(name, "coOwner."))}</div>
-              <button type="button" className="ep-text-button ep-danger-text" onClick={() => { setHasCoOwner(false); setDefaults(current => ({ ...current, coOwner: undefined })); setOibErrors(current => ({ ...current, "coOwner.oib": "" })); }}>{c.removeCoOwner}</button>
+              <button type="button" className="ep-text-button ep-danger-text" onClick={() => { setHasCoOwner(false); setOibErrors(current => ({ ...current, "coOwner.oib": "" })); }}>{c.removeCoOwner}</button>
             </fieldset> : <button type="button" className="ep-secondary" onClick={() => setHasCoOwner(true)}><Plus size={16} />{c.addCoOwner}</button>}
           </div>}</section>)}
           <div className="ep-form-footer ep-align-end"><button className="ep-button" disabled={busy} aria-busy={busy}>{busy ? <EPotpisLoader variant="inline" label={c.loading} /> : <><FileText size={18} />{c.preview}</>}</button></div>

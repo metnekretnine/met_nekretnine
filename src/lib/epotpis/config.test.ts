@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { baseUrl } from "./config";
+import { baseUrl, emailSender } from "./config";
 import { signingUrl } from "./routes";
 import { namespace, recordId } from "./store";
 const original = process.env;
@@ -27,4 +27,13 @@ test.each([
   process.env.EPOTPIS_BASE_URL = origin;
   const token = "a".repeat(64);
   expect(signingUrl(baseUrl(), token)).toBe(`${prefix}${token}`);
+});
+
+test.each(["sender@example.test", "Old sender <sender@example.test>"])("uses the approved sender name with the configured mailbox: %s", value => {
+  process.env.EPOTPIS_EMAIL_FROM = value;
+  expect(emailSender()).toBe("Maja Mara | MET d.o.o. <sender@example.test>");
+});
+test.each(["", "bad-address", "sender@example.test\nBcc: other@example.test"])("rejects an invalid sender mailbox: %s", value => {
+  process.env.EPOTPIS_EMAIL_FROM = value;
+  expect(emailSender).toThrow("notConfigured");
 });

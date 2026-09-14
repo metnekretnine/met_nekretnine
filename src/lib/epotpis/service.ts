@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { baseUrl, resendApiKey, EPotpisError } from "./config";
+import { baseUrl, resendApiKey, emailSender, EPotpisError } from "./config";
 import { createContractPdf, interpolate, sha256, signContractPdf } from "./pdf";
 import { loadEPotpisTemplate } from "@/lib/epotpis/templates";
 import { getEPotpisTexts } from "@/lib/epotpis/texts";
@@ -30,7 +30,7 @@ function checkActive(row: ContractRow) {
 export function publicContract(row: ContractRow): PublicContract {
   if (row.status === "deleted") throw new EPotpisError("invalidDescription", 404);
   const snapshot = JSON.parse(row.snapshot) as ContractSnapshot; const input = snapshot.input;
-  return { number: snapshot.number, ownerName: ownerDisplayName(input), propertyAddress: input.propertyAddress, kind: input.kind, consumer: input.consumer,
+  return { ownerName: ownerDisplayName(input), propertyAddress: input.propertyAddress, kind: input.kind, consumer: input.consumer,
     signers: [input.signerName, ...(input.coOwner ? [input.coOwner.signerName] : [])],
     status: row.status === "preparing" ? "failed" : row.status === "sent" && Date.parse(snapshot.expiresAt) < Date.now() ? "expired" : row.status,
     documentHash: row.document_hash || "", signedAt: row.signed_at };
@@ -50,11 +50,12 @@ export async function brokerSignature(): Promise<Signature> {
   const stored = await setting("broker_signature"); if (!stored) throw new EPotpisError("signatureRequired"); return JSON.parse(stored);
 }
 function checkEmailConfig() {
+  emailSender();
   if (!resendApiKey() || !process.env.EPOTPIS_EMAIL_FROM || !process.env.EPOTPIS_RECIPIENT_EMAIL) throw new EPotpisError("notConfigured", 503);
 }
 export async function previewContract(input: ContractInput) {
   const [template, signature] = await Promise.all([loadEPotpisTemplate(input.kind), brokerSignature()]);
-  return createContractPdf(input, input.contractNumber, template, signature);
+  return createContractPdf(input, template, signature);
 }
 export async function createContract(input: ContractInput, requestKey: string) {
   if (!/^[a-f0-9-]{36}$/.test(requestKey)) throw new EPotpisError("validationError");
@@ -71,19 +72,19 @@ export async function createContract(input: ContractInput, requestKey: string) {
   const token = randomBytes(32).toString("hex");
   const reserved = await retryConflict(async () => {
     const repeated = await getRecord<ContractRow>(contractId); if (repeated) return repeated.data;
-    const snapshot: ContractSnapshot = { input, number: input.contractNumber, token, createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 30 * 86400000).toISOString(), template, cms: cms.app, brokerSignature: broker };
+    const snapshot: ContractSnapshot = { input, token, createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 30 * 86400000).toISOString(), template, cms: cms.app, brokerSignature: broker };
     const row: ContractRow = { id, year, sequence: 0, request_hash: requestHash, status: "preparing", snapshot: JSON.stringify(snapshot), pdf: null, final_pdf: null, document_hash: null, final_hash: null, anchor: null, signed_at: null };
     await commitRecords([
-      newRecord(contractId, "contract", row, `${snapshot.number} - ${ownerDisplayName(input)}`),
+      newRecord(contractId, "contract", row, ownerDisplayName(input)),
       newRecord(recordId("token", sha256(token)), "token", { contractId: id }),
-      eventWrite(id, "contract_created", { number: snapshot.number, templateVersion: template.version, sourceSha256: template.sourceSha256 }),
+      eventWrite(id, "contract_created", { templateVersion: template.version, sourceSha256: template.sourceSha256 }),
     ]); return row;
   });
   if (reserved.request_hash !== requestHash || reserved.status === "deleted") throw new EPotpisError("conflict", 409);
   const snapshot = JSON.parse(reserved.snapshot) as ContractSnapshot;
   if (!["preparing", "failed"].includes(reserved.status)) return adminContract(reserved);
   try {
-    const result = await createContractPdf(snapshot.input, snapshot.number, snapshot.template, snapshot.brokerSignature);
+    const result = await createContractPdf(snapshot.input, snapshot.template, snapshot.brokerSignature);
     await retryConflict(async () => {
       const doc = await getRecord<ContractRow>(contractId); if (!doc) throw new EPotpisError("error", 500);
       if (doc.data.status !== "preparing") return;
@@ -150,7 +151,7 @@ export async function deleteContract(id: string, confirmation: unknown) {
     // Remove all contract content, PDF bytes, signatures and personal data from the record.
     const deleted: ContractRow = { id, year: doc.data.year, sequence: doc.data.sequence, status: "deleted", snapshot: "", request_hash: "", pdf: null, final_pdf: null, document_hash: null, final_hash: null, anchor: null, signed_at: null };
     await commitRecords([
-      { mode: "update", id: doc._id, revision: doc._rev, kind: "deletedContract", label: snapshot.number, data: deleted },
+      { mode: "update", id: doc._id, revision: doc._rev, kind: "deletedContract", label: "Obrisan ugovor", data: deleted },
       ...(token ? [deleteRecord(token)] : []),
       ...messages.map(deleteRecord),
       ...events.filter(event => event.data.contractId === id).map(deleteRecord),
@@ -158,8 +159,9 @@ export async function deleteContract(id: string, confirmation: unknown) {
   });
 }
 function enqueue(id: string, snapshot: ContractSnapshot, kind: "invitation" | "owner_signed" | "broker_signed", signedAt = "") {
-  const c = snapshot.cms;
-  const values = { name: ownerDisplayName(snapshot.input), number: snapshot.number, link: signingUrl(baseUrl(), snapshot.token), signedAt: signedAt ? new Date(signedAt).toLocaleString("hr-HR", { timeZone: "Europe/Zagreb" }) : "" };
+  // New notifications use current wording; PDF and consent snapshots stay immutable.
+  const c = getEPotpisTexts("hr").app;
+  const values = { name: ownerDisplayName(snapshot.input), link: signingUrl(baseUrl(), snapshot.token), signedAt: signedAt ? new Date(signedAt).toLocaleString("hr-HR", { timeZone: "Europe/Zagreb" }) : "" };
   const subject = kind === "invitation" ? c.invitationSubject : kind === "owner_signed" ? c.signedSubject : c.brokerSignedSubject;
   const body = kind === "invitation" ? c.invitationBody : kind === "owner_signed" ? c.signedBody : c.brokerSignedBody;
   const recipient = kind === "broker_signed" ? process.env.EPOTPIS_RECIPIENT_EMAIL || "" : snapshot.input.email;
@@ -187,8 +189,7 @@ export async function dispatchEmails(id: string) {
       const row = await contractById(id);
       if (message.kind === "invitation" && !["sent","signed"].includes(row.status)) status = "cancelled";
       else {
-        const snapshot = JSON.parse(row.snapshot) as ContractSnapshot;
-        const response = await fetch("https://api.resend.com/emails", { method:"POST", signal:AbortSignal.timeout(10000), headers:{ Authorization:`Bearer ${resendApiKey()}`, "Content-Type":"application/json", "Idempotency-Key":message.id }, body:JSON.stringify({ from:process.env.EPOTPIS_EMAIL_FROM, to:[message.recipient], subject:message.subject, text:message.body, ...(message.html ? { html:message.html } : {}), ...(message.attachment ? { attachments:[{ filename:`MET-${snapshot.number.replace(/[^\p{L}\p{N}._-]+/gu,"-")}.pdf`, content:row.final_pdf }] } : {}) }) });
+        const response = await fetch("https://api.resend.com/emails", { method:"POST", signal:AbortSignal.timeout(10000), headers:{ Authorization:`Bearer ${resendApiKey()}`, "Content-Type":"application/json", "Idempotency-Key":message.id }, body:JSON.stringify({ from:emailSender(), to:[message.recipient], subject:message.subject, text:message.body, ...(message.html ? { html:message.html } : {}), ...(message.attachment ? { attachments:[{ filename:"MET-ugovor-potpisan.pdf", content:row.final_pdf }] } : {}) }) });
         if (!response.ok) throw new Error("delivery_failed");
         const data = await response.json() as { id:string }; providerId = data.id; status = "delivered";
       }

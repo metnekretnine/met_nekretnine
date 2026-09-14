@@ -2,7 +2,6 @@ import type { EPotpisTexts } from "@/lib/epotpis/texts";
 import type { EPotpisTemplate } from "@/lib/epotpis/templates";
 
 export interface ContractInput {
-  contractNumber: string;
   coOwner?: ContractOwner;
   kind: "open" | "exclusive"; consumer: boolean; ownerName: string; oib: string; ownerAddress: string;
   phone: string; email: string; signerName: string; propertyAddress: string; descriptionField: string;
@@ -14,14 +13,14 @@ export type Signature = { kind: "strokes"; paths: number[][][] } | { kind: "png"
 export type ContractStatus = "preparing" | "sent" | "signed" | "revoked" | "failed" | "expired" | "deleted";
 export interface PublicContract {
   signers: string[];
-  number: string; ownerName: string; propertyAddress: string; kind: "open" | "exclusive"; consumer: boolean;
+  ownerName: string; propertyAddress: string; kind: "open" | "exclusive"; consumer: boolean;
   status: Exclude<ContractStatus, "preparing" | "deleted">; documentHash: string; signedAt: string | null;
 }
 export interface AdminContract extends PublicContract {
   id: string; createdAt: string; signUrl: string; emailStatus: "preview" | "delivered" | "failed" | "pending";
 }
 export interface ContractSnapshot {
-  input: ContractInput; number: string; createdAt: string; expiresAt: string; token: string;
+  input: ContractInput; createdAt: string; expiresAt: string; token: string;
   template: EPotpisTemplate; cms: EPotpisTexts; brokerSignature: Signature;
 }
 export interface SignBox { x: number; y: number; width: number; height: number; verticalAlign?: "bottom" }

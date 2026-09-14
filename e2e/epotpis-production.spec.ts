@@ -2,7 +2,7 @@ import { test, expect, type BrowserContext } from "@playwright/test";
 import { createHmac } from "node:crypto";
 import { createContractPdf } from "../src/lib/epotpis/pdf";
 import { loadEPotpisTemplate } from "../src/lib/epotpis/templates";
-import { testContractInput } from "../src/lib/epotpis/test-data";
+import { testContractInput } from "./fixtures/epotpis-input";
 
 // Exercise the production host locally, without sending requests to the deployed site.
 const contractsOrigin = "http://ugovori.metnekretnine.hr:3003";
@@ -42,9 +42,9 @@ test("production signing captures two individual signatures in one confirmation"
     await route.fulfill({ response, body: `Reflect.deleteProperty(Math, "sumPrecise"); Reflect.deleteProperty(Map.prototype, "getOrInsertComputed");\n${await response.text()}` });
   });
   const token = "a".repeat(64);
-  const contract = { number: "TEST-001/2026", ownerName: "Marko Horvat i Ana Horvat", signers: ["Marko Horvat", "Ana Horvat"], propertyAddress: "Testna ulica 20", kind: "open", consumer: false, status: "sent", documentHash: "test-hash", signedAt: null as string | null };
+  const contract = { ownerName: "Marko Horvat i Ana Horvat", signers: ["Marko Horvat", "Ana Horvat"], propertyAddress: "Testna ulica 20", kind: "open", consumer: false, status: "sent", documentHash: "test-hash", signedAt: null as string | null };
   // Use a populated contract, including the embedded font used in real documents.
-  const { bytes } = await createContractPdf({ ...testContractInput(true), consumer: false }, contract.number, await loadEPotpisTemplate("open"), { kind: "strokes", paths: [[[80, 150], [150, 80], [220, 140]]] });
+  const { bytes } = await createContractPdf({ ...testContractInput(true), consumer: false }, await loadEPotpisTemplate("open"), { kind: "strokes", paths: [[[80, 150], [150, 80], [220, 140]]] });
   const pdf = Buffer.from(bytes);
   const writes: Record<string, unknown>[] = [];
   const unexpected: string[] = [];

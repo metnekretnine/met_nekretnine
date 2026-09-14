@@ -3,6 +3,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { ObjectInputProps } from "sanity";
 import type { ContractRow, ContractSnapshot } from "@/lib/epotpis/types";
+import { contractPdfFilename } from "@/lib/epotpis/filename";
+import { contractLinkExpiresAt } from "@/lib/epotpis/link-expiry";
 
 export const contractStatusLabels: Record<string, string> = {
   preparing: "Izrada u tijeku", sent: "Poslan na potpis", signed: "Potpisan",
@@ -58,8 +60,7 @@ export function ContractDetails({ payload }: { payload: unknown }) {
   }
   const { row, snapshot } = data;
   const input = snapshot.input;
-  const status = row.status === "sent" && Date.parse(snapshot.expiresAt) < Date.now() ? "expired" : row.status;
-  const filename = "MET-ugovor";
+  const status = row.status === "sent" && Date.parse(snapshot.expiresAt) <= Date.now() ? "expired" : row.status;
   const people = [input, ...(input.coOwner ? [input.coOwner] : [])];
   return <div style={{ padding: "0 8px", lineHeight: 1.5 }}>
     <Section title="Ugovor"><Details values={[
@@ -71,8 +72,8 @@ export function ContractDetails({ payload }: { payload: unknown }) {
     <Section title="Spremljeni dokumenti">
       <p style={{ opacity: .75 }}>Preuzimaju se izvorno spremljene kopije iz Sanityja. Preuzimanje ne ovisi o sučelju za potpisivanje i ne izrađuje novi PDF.</p>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", paddingTop: 16, paddingBottom: 8 }}>
-        {row.final_pdf && <PdfDownload content={row.final_pdf} name={`${filename}-potpisan.pdf`}>Preuzmi potpisani PDF</PdfDownload>}
-        {row.pdf && <PdfDownload content={row.pdf} name={`${filename}-poslan.pdf`}>Preuzmi PDF prije potpisa</PdfDownload>}
+        {row.final_pdf && <PdfDownload content={row.final_pdf} name={contractPdfFilename(input, true)}>Preuzmi potpisani PDF</PdfDownload>}
+        {row.pdf && <PdfDownload content={row.pdf} name={contractPdfFilename(input)}>Preuzmi PDF prije potpisa</PdfDownload>}
         {!row.final_pdf && !row.pdf && <p>PDF još nije spremljen za ovaj ugovor.</p>}
       </div>
     </Section>
@@ -88,7 +89,7 @@ export function ContractDetails({ payload }: { payload: unknown }) {
     ]} /></Section>
     <details style={{ marginTop: 24 }}><summary style={{ cursor: "pointer" }}>Podaci za provjeru dokumenta</summary><div style={{ paddingTop: 20 }}><Details values={[
       ["ID ugovora", row.id], ["Verzija predloška", snapshot.template?.version],
-      ["Link vrijedi do", date(snapshot.expiresAt)], ["SHA-256 prije potpisa", row.document_hash], ["SHA-256 potpisanog PDF-a", row.final_hash],
+      ["Link vrijedi do", date(contractLinkExpiresAt(row, snapshot))], ["SHA-256 prije potpisa", row.document_hash], ["SHA-256 potpisanog PDF-a", row.final_hash],
     ]} /></div></details>
   </div>;
 }

@@ -6,14 +6,21 @@ import { deleteSetting, eventsFor, rateLimit, setSetting, setting } from "@/lib/
 import { decodeSignaturePng } from "@/lib/epotpis/pdf";
 import { adminContract, brokerSignature, contractById, contractByToken, createContract, deleteContract, dispatchEmails, listContracts, listOutbox, previewContract, publicContract, revokeContract, signContract } from "@/lib/epotpis/service";
 import { jsonBody, validateContract, validateSignature, validateSigningSignatures } from "@/lib/epotpis/validation";
+import { contractPdfFilename } from "@/lib/epotpis/filename";
+import type { ContractRow, ContractSnapshot } from "@/lib/epotpis/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const privateHeaders = { "Cache-Control": "private, no-store, max-age=0", "Referrer-Policy": "no-referrer", "X-Robots-Tag": "noindex, nofollow, noarchive", "X-Content-Type-Options": "nosniff" };
 function json(data: unknown, status = 200) { return NextResponse.json(data, { status, headers: privateHeaders }); }
-function pdf(bytes: Uint8Array | string | null, download: boolean) {
+function pdf(bytes: Uint8Array | string | null, download: boolean, filename: string) {
   if (!bytes) throw new EPotpisError("invalidDescription", 404);
-  return new Response(new Uint8Array(typeof bytes === "string" ? Buffer.from(bytes, "base64") : bytes), { headers: { ...privateHeaders, "Content-Type": "application/pdf", "Content-Disposition": `${download ? "attachment" : "inline"}; filename="MET-ugovor.pdf"` } });
+  return new Response(new Uint8Array(typeof bytes === "string" ? Buffer.from(bytes, "base64") : bytes), { headers: { ...privateHeaders, "Content-Type": "application/pdf", "Content-Disposition": `${download ? "attachment" : "inline"}; filename="${filename}"` } });
+}
+function storedPdf(row: ContractRow, download: boolean) {
+  const { input } = JSON.parse(row.snapshot) as ContractSnapshot;
+  const signed = row.status === "signed";
+  return pdf(signed ? row.final_pdf : row.pdf, download, contractPdfFilename(input, signed));
 }
 function failure(error: unknown) {
   if (error instanceof EPotpisError) return json({ error: error.code }, error.status);
@@ -30,11 +37,11 @@ export async function GET(request: Request, context: Context) {
     if (path[0] === "sign" && path[1] && path.length <= 3) {
       const row = await contractByToken(path[1]);
       if (path.length === 2) return json(publicContract(row));
-      if (path[2] === "pdf") return pdf(row.status === "signed" ? row.final_pdf : row.pdf, download);
+      if (path[2] === "pdf") return storedPdf(row, download);
     }
     await requireAdmin();
     if (path.join("/") === "contracts") return json({ contracts: await listContracts(), hasSignature: Boolean(await setting("broker_signature")) });
-    if (path[0] === "contracts" && path.length === 3 && path[2] === "pdf") { const row = await contractById(path[1]); return pdf(row.status === "signed" ? row.final_pdf : row.pdf, download); }
+    if (path[0] === "contracts" && path.length === 3 && path[2] === "pdf") return storedPdf(await contractById(path[1]), download);
     if (path.join("/") === "settings/signature") {
       const signature = await brokerSignature();
       if (signature.kind === "png") return new Response(new Uint8Array(decodeSignaturePng(signature)!), { headers: { ...privateHeaders, "Content-Type": "image/png" } });
@@ -79,7 +86,10 @@ export async function POST(request: Request, context: Context) {
       const signature = validateSignature(body.signature, true); decodeSignaturePng(signature);
       await setSetting("broker_signature", JSON.stringify(signature)); return json({ ok: true });
     }
-    if (path.join("/") === "preview") return pdf((await previewContract(validateContract(await jsonBody(request)))).bytes, false);
+    if (path.join("/") === "preview") {
+      const input = validateContract(await jsonBody(request));
+      return pdf((await previewContract(input)).bytes, false, contractPdfFilename(input));
+    }
     if (path.join("/") === "contracts") {
       await rateLimit("create", 30, 60000);
       return json(await createContract(validateContract(await jsonBody(request)), request.headers.get("Idempotency-Key") || ""));

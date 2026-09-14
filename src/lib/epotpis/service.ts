@@ -9,6 +9,8 @@ import { ownerDisplayName } from "./types";
 import { emailDashes, emailHtml } from "./email";
 import { splitSignatureAnchor } from "./signature-geometry";
 import { signingUrl } from "./routes";
+import { contractPdfFilename } from "./filename";
+import { CONTRACT_LINK_LIFETIME_MS, contractLinkExpiresAt } from "./link-expiry";
 
 // "preview" is retained only to display archived messages that were never sent.
 export interface OutboxRow { id: string; contractId: string; kind: string; recipient: string; subject: string; body: string; html?: string; attachment: boolean; status: "pending" | "preview" | "sending" | "delivered" | "failed" | "cancelled"; attemptedAt: string | null; leaseAt: string | null; providerId: string | null }
@@ -25,14 +27,15 @@ export async function contractByToken(token: string) {
 }
 function checkActive(row: ContractRow) {
   if (!["sent", "signed"].includes(row.status)) throw new EPotpisError("invalidDescription", 404);
-  if (row.status !== "signed" && Date.parse((JSON.parse(row.snapshot) as ContractSnapshot).expiresAt) < Date.now()) throw new EPotpisError("invalidDescription", 410);
+  const expiresAt = contractLinkExpiresAt(row, JSON.parse(row.snapshot) as ContractSnapshot);
+  if (!expiresAt || Date.now() >= Date.parse(expiresAt)) throw new EPotpisError("invalidDescription", 410);
 }
 export function publicContract(row: ContractRow): PublicContract {
   if (row.status === "deleted") throw new EPotpisError("invalidDescription", 404);
   const snapshot = JSON.parse(row.snapshot) as ContractSnapshot; const input = snapshot.input;
   return { ownerName: ownerDisplayName(input), propertyAddress: input.propertyAddress, kind: input.kind, consumer: input.consumer,
     signers: [input.signerName, ...(input.coOwner ? [input.coOwner.signerName] : [])],
-    status: row.status === "preparing" ? "failed" : row.status === "sent" && Date.parse(snapshot.expiresAt) < Date.now() ? "expired" : row.status,
+    status: row.status === "preparing" ? "failed" : row.status === "sent" && Date.parse(snapshot.expiresAt) <= Date.now() ? "expired" : row.status,
     documentHash: row.document_hash || "", signedAt: row.signed_at };
 }
 export async function listOutbox() { return (await listRecords<OutboxRow>("outbox")).map(doc => doc.data); }
@@ -72,7 +75,7 @@ export async function createContract(input: ContractInput, requestKey: string) {
   const token = randomBytes(32).toString("hex");
   const reserved = await retryConflict(async () => {
     const repeated = await getRecord<ContractRow>(contractId); if (repeated) return repeated.data;
-    const snapshot: ContractSnapshot = { input, token, createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 30 * 86400000).toISOString(), template, cms: cms.app, brokerSignature: broker };
+    const snapshot: ContractSnapshot = { input, token, createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + CONTRACT_LINK_LIFETIME_MS).toISOString(), template, cms: cms.app, brokerSignature: broker };
     const row: ContractRow = { id, year, sequence: 0, request_hash: requestHash, status: "preparing", snapshot: JSON.stringify(snapshot), pdf: null, final_pdf: null, document_hash: null, final_hash: null, anchor: null, signed_at: null };
     await commitRecords([
       newRecord(contractId, "contract", row, ownerDisplayName(input)),
@@ -187,9 +190,10 @@ export async function dispatchEmails(id: string) {
     let status: OutboxRow["status"] = "failed", providerId: string | null = null;
     try {
       const row = await contractById(id);
+      const snapshot = JSON.parse(row.snapshot) as ContractSnapshot;
       if (message.kind === "invitation" && !["sent","signed"].includes(row.status)) status = "cancelled";
       else {
-        const response = await fetch("https://api.resend.com/emails", { method:"POST", signal:AbortSignal.timeout(10000), headers:{ Authorization:`Bearer ${resendApiKey()}`, "Content-Type":"application/json", "Idempotency-Key":message.id }, body:JSON.stringify({ from:emailSender(), to:[message.recipient], subject:message.subject, text:message.body, ...(message.html ? { html:message.html } : {}), ...(message.attachment ? { attachments:[{ filename:"MET-ugovor-potpisan.pdf", content:row.final_pdf }] } : {}) }) });
+        const response = await fetch("https://api.resend.com/emails", { method:"POST", signal:AbortSignal.timeout(10000), headers:{ Authorization:`Bearer ${resendApiKey()}`, "Content-Type":"application/json", "Idempotency-Key":message.id }, body:JSON.stringify({ from:emailSender(), to:[message.recipient], subject:message.subject, text:message.body, ...(message.html ? { html:message.html } : {}), ...(message.attachment ? { attachments:[{ filename:contractPdfFilename(snapshot.input, true), content:row.final_pdf }] } : {}) }) });
         if (!response.ok) throw new Error("delivery_failed");
         const data = await response.json() as { id:string }; providerId = data.id; status = "delivered";
       }

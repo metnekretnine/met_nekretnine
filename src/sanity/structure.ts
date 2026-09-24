@@ -4,8 +4,11 @@ import type {
   StructureBuilder,
 } from "sanity/structure";
 import React, { ComponentType } from "react";
+import { PriceListGuide } from "./components/PriceListGuide";
 import {
+  BillIcon,
   CaseIcon,
+  CogIcon,
   ComposeIcon,
   DocumentsIcon,
   EnvelopeIcon,
@@ -67,6 +70,9 @@ const manuallyHandledSchemas = [
   "agent",
   "listing",
   "listingExplorerSection",
+  "priceListSection",
+  "priceListSettings",
+  "priceListSnapshot",
 ];
 
 export const structure: StructureResolver = (S) =>
@@ -252,6 +258,45 @@ export const structure: StructureResolver = (S) =>
                 "blogAuthorPage",
                 ComposeIcon,
               ),
+            ]),
+        ),
+      S.divider(),
+
+      // Cjenik
+      S.listItem()
+        .title("Cjenik")
+        .icon(BillIcon)
+        .child(
+          S.list()
+            .title("Cjenik")
+            .items([
+              singletonListItem(S, "Novi cjenik", "priceListSection", BillIcon),
+              S.listItem()
+                .title("Povijest cjenika")
+                .icon(DocumentsIcon)
+                .child(
+                  S.documentTypeList("priceListSnapshot")
+                    .title("Povijest cjenika")
+                    .defaultOrdering([
+                      { field: "publishedAt", direction: "desc" },
+                    ]),
+                ),
+              S.divider(),
+              singletonListItem(
+                S,
+                "Podaci o objektu i prikaz",
+                "priceListSettings",
+                CogIcon,
+              ),
+              S.listItem()
+                .title("Upute za korištenje")
+                .id("priceListGuide")
+                .icon(HelpCircleIcon)
+                .child(
+                  S.component(PriceListGuide)
+                    .id("priceListGuide")
+                    .title("Upute za korištenje"),
+                ),
             ]),
         ),
       S.divider(),

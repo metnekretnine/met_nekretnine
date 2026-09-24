@@ -1,7 +1,7 @@
 import { type SchemaTypeDefinition } from "sanity";
 
 import { localeString } from "./localeString";
-import { localeRichText } from "./localeRichText";
+import { localeRichText, termsRichText } from "./localeRichText";
 import { contentSection } from "./contentSection";
 import { faqSection } from "./faqSection";
 import { metHomePage } from "./metHomePage";
@@ -40,6 +40,11 @@ import { agent } from "./agent";
 import { listing } from "./listing";
 import { listingDetailsPage } from "./listingDetailsPage";
 import { listingExplorerSection } from "./listingExplorerSection";
+import { priceListService } from "./priceListService";
+import { priceListTable } from "./priceListTable";
+import { priceListSection } from "./priceListSection";
+import { priceListSettings } from "./priceListSettings";
+import { priceListSnapshot } from "./priceListSnapshot";
 
 import { ePotpisRecord } from "./ePotpisRecord";
 
@@ -48,6 +53,7 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     ePotpisRecord,
     localeString,
     localeRichText,
+    termsRichText,
     contentSection,
     faqSection,
     howWeDoItSection,
@@ -86,5 +92,10 @@ export const schema: { types: SchemaTypeDefinition[] } = {
     listing,
     listingDetailsPage,
     listingExplorerSection,
+    priceListService,
+    priceListTable,
+    priceListSection,
+    priceListSettings,
+    priceListSnapshot,
   ],
 };

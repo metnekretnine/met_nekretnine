@@ -29,3 +29,4 @@ export * from "./cta";
 export * from "./notificationBar";
 export * from "./recentPostsSection";
 export * from "./listingExplorerSection";
+export * from "./priceListSection";

@@ -6,13 +6,15 @@ import type { PortableTextComponents } from "@portabletext/react";
 import { urlFor } from "@/sanity/lib/image";
 import { cn } from "@/shadcn/lib/utils";
 import Image from "next/image";
-import React from "react";
+import React, { ReactNode } from "react";
 import { PortableTextBlock, ArbitraryTypedObject } from "@portabletext/types";
 
 interface PortableTextProps {
   value: Array<PortableTextBlock | ArbitraryTypedObject>;
   isBackgroundDark?: boolean;
   textSize?: string;
+  // Rendered in place of the "priceListTable" block (terms page only).
+  priceList?: ReactNode;
 }
 
 interface TableValue extends ArbitraryTypedObject {
@@ -26,12 +28,14 @@ export const PortableText = ({
   value,
   isBackgroundDark = false,
   textSize,
+  priceList,
 }: PortableTextProps) => {
   const textColor = isBackgroundDark ? "text-white/70" : "text-muted-foreground";
   const headingColor = isBackgroundDark ? "text-white" : "text-foreground";
 
   const components: PortableTextComponents = {
     types: {
+      priceListTable: () => priceList ?? null,
       table: ({ value }: PortableTextComponentProps<TableValue>) => {
         const rows = value.rows?.filter((row) => row.cells?.length) ?? [];
         if (!rows.length) return null;

@@ -59,6 +59,7 @@ export async function POST(req: NextRequest) {
       "topPicksSection",
       "whatsAppButtonSection",
       "listingExplorerSection",
+      "priceListSettings",
       "agent",
       "author",
     ]);

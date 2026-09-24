@@ -48,7 +48,7 @@ export const termsPage = defineType({
     defineField({
       name: "content",
       title: "Content",
-      type: "localeRichText",
+      type: "termsRichText",
       validation: (rule) => rule.required(),
     }),
     defineField({

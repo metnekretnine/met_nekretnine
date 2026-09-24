@@ -11,6 +11,7 @@ import { table } from "@sanity/table";
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
 import { schema } from "./src/sanity/schemaTypes";
 import { structure } from "./src/sanity/structure";
+import { priceListPlugin } from "./src/sanity/lib/priceListPlugin";
 
 export default defineConfig({
   basePath: "/admin",
@@ -23,6 +24,7 @@ export default defineConfig({
   },
   plugins: [
     table(),
+    priceListPlugin(),
     structureTool({ structure }),
         presentationTool({
       previewUrl: {

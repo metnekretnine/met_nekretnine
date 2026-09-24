@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import { PortableText, SubPageHero } from "@/components";
+// Server-only (Sanity write token), so it stays out of the client-imported barrel.
+import { PriceList } from "@/components/PriceList/PriceList";
 import { fetchTermsPageCms } from "@/sanity/queries";
 import { getLang, generatePageMetadata } from "@/lib/utils";
 import { PageBreadcrumbJsonLd } from "@/analytics";
@@ -17,9 +19,15 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-export default async function TermsPage() {
+interface TermsPageProps {
+  searchParams: Promise<{ admin?: string }>;
+}
+
+export default async function TermsPage({ searchParams }: TermsPageProps) {
+  // Temporary: the new price list is shown only with ?admin=true until approved.
+  const isAdminPreview = (await searchParams).admin === "true";
   const lang = await getLang();
-  const pageCms = await fetchTermsPageCms(lang);
+  const pageCms = await fetchTermsPageCms(lang, isAdminPreview);
 
   return (
     <>
@@ -36,7 +44,10 @@ export default async function TermsPage() {
       />
       <section className="container mx-auto px-global py-16 md:py-24">
         <div className="prose prose-lg max-w-3xl text-muted-foreground">
-          <PortableText value={pageCms.content} />
+          <PortableText
+            value={pageCms.content}
+            priceList={isAdminPreview ? <PriceList /> : undefined}
+          />
         </div>
       </section>
     </>

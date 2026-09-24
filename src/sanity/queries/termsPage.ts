@@ -29,16 +29,13 @@ const termsPageQuery = groq`
   }
 `;
 
-// `isDraftPreview` reads the unpublished draft (e.g. the new price list) for ?admin=true.
 export async function fetchTermsPageCms(
   lang: Language["id"],
-  isDraftPreview = false,
 ): Promise<TermsPageCMS> {
   const { data } = await sanityFetch({
     query: termsPageQuery,
     params: { lang },
     tags: ["termsPage"],
-    ...(isDraftPreview && { perspective: "drafts" as const }),
   });
   if (!data) {
     notFound();
